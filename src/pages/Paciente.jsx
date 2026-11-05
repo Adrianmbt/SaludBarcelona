@@ -25,9 +25,9 @@ import {
 
 const SECCIONES = [
   { id: 'dashboard', etiqueta: 'Dashboard', detalle: 'Resumen de salud', icono: 'grid_view' },
-  { id: 'citas', etiqueta: 'Citas', detalle: 'Agenda y confirmaciÃ³n', icono: 'calendar_month' },
-  { id: 'historial', etiqueta: 'Historial', detalle: 'Consultas y evoluciÃ³n', icono: 'timeline' },
-  { id: 'estudios', etiqueta: 'Estudios', detalle: 'Ã“rdenes y resultados', icono: 'monitor_heart' },
+  { id: 'citas', etiqueta: 'Citas', detalle: 'Agenda y confirmación', icono: 'calendar_month' },
+  { id: 'historial', etiqueta: 'Historial', detalle: 'Consultas y evolución', icono: 'timeline' },
+  { id: 'estudios', etiqueta: 'Estudios', detalle: 'Órdenes y resultados', icono: 'monitor_heart' },
   { id: 'notificaciones', etiqueta: 'Notificaciones', detalle: 'Correos del sistema', icono: 'notifications' },
 ];
 
@@ -115,7 +115,7 @@ function calcularEdad(fechaNac) {
   let edad = hoy.getFullYear() - nac.getFullYear();
   const m = hoy.getMonth() - nac.getMonth();
   if (m < 0 || (m === 0 && hoy.getDate() < nac.getDate())) edad -= 1;
-  return `${edad} aÃ±os`;
+  return `${edad} años`;
 }
 
 const ESTADOS_CITA = {
@@ -137,7 +137,7 @@ const ESTADOS_ORDEN = {
 const ESTADOS_NOTIFICACION = {
   enviado: { tono: 'success', etiqueta: 'Enviado' },
   demo: { tono: 'info', etiqueta: 'Registrado' },
-  error: { tono: 'error', etiqueta: 'Error de envÃ­o' },
+  error: { tono: 'error', etiqueta: 'Error de envío' },
   pendiente: { tono: 'amber', etiqueta: 'Pendiente' },
 };
 
@@ -255,7 +255,7 @@ export default function Paciente() {
           setSlotMsgPosponer('');
         } else {
           setSlotsPosponer([]);
-          setSlotMsgPosponer(data.mensaje || 'No hay horarios disponibles para esta fecha con este mÃ©dico.');
+          setSlotMsgPosponer(data.mensaje || 'No hay horarios disponibles para esta fecha con este médico.');
         }
       })
       .catch(() => {
@@ -284,7 +284,7 @@ export default function Paciente() {
       const resp = await API.posponerCita(citaAPosponer.id, {
         nueva_fecha: nuevaFechaPosponer,
         nueva_hora: nuevaHoraPosponer.length === 5 ? `${nuevaHoraPosponer}:00` : nuevaHoraPosponer,
-        motivo: motivoPosponer || 'Solicitud de postergaciÃ³n desde el portal del paciente',
+        motivo: motivoPosponer || 'Solicitud de postergación desde el portal del paciente',
       });
       setCitas((prev) => prev.map((c) => (c.id === resp.id ? resp : c)));
       setCitaAPosponer(null);
@@ -307,12 +307,12 @@ export default function Paciente() {
     setCancelarError('');
     try {
       const resp = await API.cancelarCita(citaACancelar.id, {
-        motivo: motivoCancelar || 'CancelaciÃ³n solicitada desde el portal del paciente',
+        motivo: motivoCancelar || 'Cancelación solicitada desde el portal del paciente',
       });
       setCitas((prev) => prev.map((c) => (c.id === resp.id ? resp : c)));
       setCitaACancelar(null);
       setMotivoCancelar('');
-      setAviso('Cita cancelada. Tu cupo quedÃ³ liberado.');
+      setAviso('Cita cancelada. Tu cupo quedó liberado.');
     } catch (err) {
       setCancelarError(err.message || 'No se pudo cancelar la cita.');
     } finally {
@@ -393,7 +393,7 @@ export default function Paciente() {
       setSeccion('dashboard');
       setNavAbierta(false);
     } catch (err) {
-      setErrorEntrada(err.message || 'No se pudo iniciar sesiÃ³n. Verifique su cÃ©dula y su contraseÃ±a.');
+      setErrorEntrada(err.message || 'No se pudo iniciar sesión. Verifique su cédula y su contraseña.');
     } finally {
       setEntrando(false);
     }
@@ -485,7 +485,7 @@ export default function Paciente() {
       setCitas((prev) => [nueva, ...prev]);
       setSolicitudAbierta(false);
       setAviso(
-        'Solicitud enviada. La recepciÃ³n del centro te confirmarÃ¡ la fecha y la hora.',
+        'Solicitud enviada. La recepción del centro te confirmar¡ la fecha y la hora.',
       );
     } catch (err) {
       setSolicitudError(err.message || 'No se pudo enviar la solicitud.');
@@ -501,17 +501,17 @@ export default function Paciente() {
     setInfoEntrada('');
     const ident = parseCedula(recuperarForm.cedula);
     if (!ident.cedula) {
-      setErrorEntrada('Ingrese su cÃ©dula.');
+      setErrorEntrada('Ingrese su cédula.');
       setRecuperando(false);
       return;
     }
     try {
       const res = await API.recuperarContrasena(ident.cedula, recuperarForm.email);
-      setInfoEntrada(res.mensaje || 'Se enviÃ³ el cÃ³digo a su correo.');
+      setInfoEntrada(res.mensaje || 'Se envió el código a su correo.');
       setRecuperarForm((f) => ({ ...f, cedula: ident.cedula }));
       setFlujoAcceso('reset');
     } catch (err) {
-      setErrorEntrada(err.message || 'No se pudo generar el cÃ³digo de recuperaciÃ³n.');
+      setErrorEntrada(err.message || 'No se pudo generar el código de recuperación.');
     } finally {
       setRecuperando(false);
     }
@@ -524,7 +524,7 @@ export default function Paciente() {
     setInfoEntrada('');
     const password = String(recuperarForm.password || '');
     if (password.length < 6 || password.length > 64) {
-      setErrorEntrada('La contraseÃ±a nueva debe tener entre 6 y 64 caracteres.');
+      setErrorEntrada('La contraseña nueva debe tener entre 6 y 64 caracteres.');
       setRecuperando(false);
       return;
     }
@@ -532,9 +532,9 @@ export default function Paciente() {
       await API.restablecerContrasena(recuperarForm.cedula, recuperarForm.codigo, password);
       setFlujoAcceso('login');
       setRecuperarForm({ cedula: '', email: '', codigo: '', password: '' });
-      setInfoEntrada('Â¡ContraseÃ±a restablecida! Inicia sesiÃ³n con tu cÃ©dula y la nueva contraseÃ±a.');
+      setInfoEntrada('¡Contraseña restablecida! Inicia sesión con tu cédula y la nueva contraseña.');
     } catch (err) {
-      setErrorEntrada(err.message || 'No se pudo restablecer la contraseÃ±a.');
+      setErrorEntrada(err.message || 'No se pudo restablecer la contraseña.');
     } finally {
       setRecuperando(false);
     }
@@ -557,7 +557,7 @@ export default function Paciente() {
         setAutollenadoInfo(
           `Datos cargados desde el sistema de personal${
             res.cargo ? ` (${res.cargo})` : ''
-          }. Revisa que estÃ©n correctos.`,
+          }. Revisa que estén correctos.`,
         );
       }
     } catch {
@@ -573,7 +573,7 @@ export default function Paciente() {
     setInfoEntrada('');
     const ident = parseCedula(registroForm.cedula);
     if (!ident.cedula || ident.cedula.length < 5) {
-      setErrorEntrada('Ingrese una cÃ©dula vÃ¡lida.');
+      setErrorEntrada('Ingrese una cédula v¡lida.');
       return;
     }
     if (registroForm.nombre_completo.trim().length < 3) {
@@ -582,7 +582,7 @@ export default function Paciente() {
     }
     const password = String(registroForm.password || '');
     if (password.length < 6 || password.length > 64) {
-      setErrorEntrada('La contraseÃ±a debe tener entre 6 y 64 caracteres.');
+      setErrorEntrada('La contraseña debe tener entre 6 y 64 caracteres.');
       return;
     }
     if (!registroForm.consentimiento) {
@@ -620,7 +620,7 @@ export default function Paciente() {
       setPasswordEntrada(password);
       setSeccion('dashboard');
       setFlujoAcceso('login');
-      setAviso('Â¡Bienvenido! Tu cuenta fue creada correctamente.');
+      setAviso('¡Bienvenido! Tu cuenta fue creada correctamente.');
     } catch (err) {
       setErrorEntrada(err.message || 'No se pudo crear la cuenta.');
     } finally {
@@ -628,7 +628,7 @@ export default function Paciente() {
     }
   };
 
-  // Restaurar sesiÃ³n al montar (pantalla de login por defecto si no hay sesiÃ³n real)
+  // Restaurar sesión al montar (pantalla de login por defecto si no hay sesión real)
   useEffect(() => {
     let activo = true;
     (async () => {
@@ -695,7 +695,7 @@ export default function Paciente() {
     } catch (err) {
       if (err && err.status === 401) {
         cerrarSesionPaciente();
-        setAvisoError('Su sesiÃ³n ha expirado. Por favor ingrese de nuevo.');
+        setAvisoError('Su sesión ha expirado. Por favor ingrese de nuevo.');
       } else {
         setHistorial(null);
         setCitas([]);
@@ -728,12 +728,12 @@ export default function Paciente() {
   const centroCITAB = {
     id: 2,
     nombre: 'Centro Integral de Salud CITAB',
-    subtitulo: 'Centro de Especialidades MÃ©dicas Municipal',
+    subtitulo: 'Centro de Especialidades Médicas Municipal',
     tipo: 'Especializado',
     parroquia: 'El Carmen',
     direccion: 'Av. Caracas, Sector Tronconal III, Barcelona',
     horario: 'Lunes a Viernes 7:00 AM - 5:30 PM',
-    servicios: ['Consulta Especializada', 'Laboratorio', 'ImÃ¡genes', 'Farmacia'],
+    servicios: ['Consulta Especializada', 'Laboratorio', 'Im¡genes', 'Farmacia'],
     logo: '/identidad visual/InstitutoSalud.jpeg',
   };
 
@@ -839,7 +839,7 @@ export default function Paciente() {
           <button
             onClick={() => setNavAbierta((v) => !v)}
             className="p-2 -ml-2 rounded-full text-on-surface-variant hover:bg-surface-container lg:ring-1 lg:ring-outline-variant transition-colors"
-            aria-label={navAbierta ? 'Cerrar navegaciÃ³n' : 'Abrir navegaciÃ³n'}
+            aria-label={navAbierta ? 'Cerrar navegación' : 'Abrir navegación'}
             aria-expanded={navAbierta}
           >
             <Icon name={navAbierta ? 'close' : 'menu'} />
@@ -850,7 +850,7 @@ export default function Paciente() {
               {paciente ? 'Portal del Paciente' : 'Acceso'}
             </p>
             <h1 className="text-lg font-semibold text-primary leading-tight truncate">
-              {paciente ? `Â¡Hola, ${paciente.nombre_completo.split(' ')[0]}!` : 'Portal del Paciente'}
+              {paciente ? `¡Hola, ${paciente.nombre_completo.split(' ')[0]}!` : 'Portal del Paciente'}
             </h1>
           </div>
 
@@ -885,8 +885,8 @@ export default function Paciente() {
                 to="/"
                 onClick={cerrarSesionPaciente}
                 className="flex items-center justify-center w-9 h-9 rounded-full text-on-surface-variant hover:text-error hover:bg-error/5 transition-colors"
-                aria-label="Cerrar sesiÃ³n y volver al portal"
-                title="Cerrar sesiÃ³n"
+                aria-label="Cerrar sesión y volver al portal"
+                title="Cerrar sesión"
               >
                 <Icon name="logout" className="text-xl" />
               </Link>
@@ -932,7 +932,7 @@ export default function Paciente() {
                 titulo="No tienes notificaciones"
                 clase="py-8 text-center text-on-surface-variant space-y-3 bg-surface-container-low rounded-xl border border-outline-variant"
               >
-                <p className="text-xs mt-1">Revisa esta secciÃ³n para actualizaciones de tus citas y recetas</p>
+                <p className="text-xs mt-1">Revisa esta sección para actualizaciones de tus citas y recetas</p>
               </EstadoVacio>
             ) : (
               notificaciones.slice(0, 5).map((n) => {
@@ -988,7 +988,7 @@ export default function Paciente() {
               className={`shrink-0 w-[min(280px,85vw)] bg-surface border-r border-outline-variant flex flex-col z-40 transition-all duration-300 ease-out ${
                 navAbierta ? 'ml-0' : '-ml-[min(280px,85vw)]'
               }`}
-              aria-label="NavegaciÃ³n del portal"
+              aria-label="Navegación del portal"
             >
               {contenidoNav}
             </aside>
@@ -1021,7 +1021,7 @@ export default function Paciente() {
                       </div>
                       <h2 className="font-display text-2xl font-bold text-center text-secondary">Portal del Paciente</h2>
                       <p className="text-sm text-on-surface-variant text-center mt-1.5">
-                        Ingresa tu cÃ©dula y tu contraseÃ±a para consultar tu historial clÃ­nico, citas y estudios.
+                        Ingresa tu cédula y tu contraseña para consultar tu historial clínico, citas y estudios.
                       </p>
 
                       {errorEntrada && (
@@ -1044,11 +1044,11 @@ export default function Paciente() {
                           e.preventDefault();
                           const ident = parseCedula(cedulaEntrada);
                           if (!ident.cedula) {
-                            setErrorEntrada('Ingrese su cÃ©dula.');
+                            setErrorEntrada('Ingrese su cédula.');
                             return;
                           }
                           if (String(passwordEntrada).length < 4) {
-                            setErrorEntrada('Ingrese su contraseÃ±a.');
+                            setErrorEntrada('Ingrese su contraseña.');
                             return;
                           }
                           entrar(ident.cedula, passwordEntrada);
@@ -1056,7 +1056,7 @@ export default function Paciente() {
                       >
                         <TextField
                           fullWidth
-                          label="CÃ©dula de Identidad"
+                          label="Cédula de Identidad"
                           placeholder="V-12345678"
                           value={cedulaEntrada}
                           onChange={(e) => {
@@ -1069,8 +1069,8 @@ export default function Paciente() {
                         <TextField
                           fullWidth
                           type="password"
-                          label="ContraseÃ±a"
-                          placeholder="Tu contraseÃ±a"
+                          label="Contraseña"
+                          placeholder="Tu contraseña"
                           value={passwordEntrada}
                           onChange={(e) => {
                             setPasswordEntrada(e.target.value);
@@ -1078,7 +1078,7 @@ export default function Paciente() {
                           }}
                           sx={accessFieldSx}
                           slotProps={{ htmlInput: { autoComplete: 'current-password' } }}
-                          helperText="La contraseÃ±a que elegiste al crear tu cuenta."
+                          helperText="La contraseña que elegiste al crear tu cuenta."
                         />
                         <Button
                           type="submit"
@@ -1118,14 +1118,14 @@ export default function Paciente() {
                       >
                         <div className="flex items-center gap-2">
                           <Icon name="lock_reset" className="text-doc" />
-                          <p className="text-sm font-bold text-primary">Recuperar mi contraseÃ±a</p>
+                          <p className="text-sm font-bold text-primary">Recuperar mi contraseña</p>
                         </div>
                         <p className="text-xs text-on-surface-variant -mt-2">
-                          Ingrese su cÃ©dula y el correo con el que se registrÃ³. Le enviaremos un cÃ³digo de 6 dÃ­gitos.
+                          Ingrese su cédula y el correo con el que se registró. Le enviaremos un código de 6 dígitos.
                         </p>
                         <TextField
                           fullWidth
-                          label="CÃ©dula de Identidad"
+                          label="Cédula de Identidad"
                           placeholder="V-12345678"
                           value={recuperarForm.cedula}
                           onChange={(e) =>
@@ -1159,7 +1159,7 @@ export default function Paciente() {
                             '&:hover': { backgroundColor: 'var(--color-doc-deep)' },
                           }}
                         >
-                          {recuperando ? 'Enviando...' : 'Enviar cÃ³digo por correo'}
+                          {recuperando ? 'Enviando...' : 'Enviar código por correo'}
                         </Button>
                         <button
                           type="button"
@@ -1178,21 +1178,21 @@ export default function Paciente() {
                       <form className="mt-5 flex flex-col gap-5" onSubmit={restablecerContrasena}>
                         <div className="flex items-center gap-2">
                           <Icon name="password" className="text-doc" />
-                          <p className="text-sm font-bold text-primary">Crear una contraseÃ±a nueva</p>
+                          <p className="text-sm font-bold text-primary">Crear una contraseña nueva</p>
                         </div>
                         <p className="text-xs text-on-surface-variant -mt-2">
-                          Ingresa el cÃ³digo recibido y elige tu nueva contraseÃ±a (mÃ­nimo 6 caracteres).
+                          Ingresa el código recibido y elige tu nueva contraseña (mínimo 6 caracteres).
                         </p>
                         <TextField
                           fullWidth
-                          label="CÃ©dula"
+                          label="Cédula"
                           value={recuperarForm.cedula}
                           disabled
                           sx={accessFieldSx}
                         />
                         <TextField
                           fullWidth
-                          label="CÃ³digo de 6 dÃ­gitos"
+                          label="Código de 6 dígitos"
                           slotProps={{ htmlInput: { inputMode: 'numeric', maxLength: 6 } }}
                           value={recuperarForm.codigo}
                           onChange={(e) =>
@@ -1207,8 +1207,8 @@ export default function Paciente() {
                         <TextField
                           fullWidth
                           type="password"
-                          label="ContraseÃ±a nueva"
-                          placeholder="MÃ­nimo 6 caracteres"
+                          label="Contraseña nueva"
+                          placeholder="Mínimo 6 caracteres"
                           slotProps={{ htmlInput: { maxLength: 64, autoComplete: 'new-password' } }}
                           value={recuperarForm.password}
                           onChange={(e) =>
@@ -1233,7 +1233,7 @@ export default function Paciente() {
                             '&:hover': { backgroundColor: 'var(--color-doc-deep)' },
                           }}
                         >
-                          {recuperando ? 'Guardando...' : 'Restablecer mi contraseÃ±a'}
+                          {recuperando ? 'Guardando...' : 'Restablecer mi contraseña'}
                         </Button>
                         <button
                           type="button"
@@ -1255,7 +1255,7 @@ export default function Paciente() {
                           <p className="text-sm font-bold text-primary">Crear mi cuenta</p>
                         </div>
                         <p className="text-xs text-on-surface-variant -mt-2">
-                          Registra tus datos una sola vez. PodrÃ¡s reservar y consultar tus citas.
+                          Registra tus datos una sola vez. Podr¡s reservar y consultar tus citas.
                         </p>
                         <div className="grid grid-cols-[92px_1fr] gap-3">
                           <TextField
@@ -1272,7 +1272,7 @@ export default function Paciente() {
                             <MenuItem value="P">P</MenuItem>
                           </TextField>
                           <TextField
-                            label="CÃ©dula de Identidad"
+                            label="Cédula de Identidad"
                             placeholder="12345678"
                             value={registroForm.cedula}
                             onChange={(e) => {
@@ -1290,7 +1290,7 @@ export default function Paciente() {
                                 ) : null,
                               },
                             }}
-                            helperText="Si eres trabajador de la AlcaldÃ­a, al salir del campo cargamos tus datos."
+                            helperText="Si eres trabajador de la Alcaldía, al salir del campo cargamos tus datos."
                           />
                         </div>
                         {autollenadoInfo && (
@@ -1302,7 +1302,7 @@ export default function Paciente() {
                         <TextField
                           fullWidth
                           label="Nombre completo"
-                          placeholder="MarÃ­a RodrÃ­guez"
+                          placeholder="María Rodríguez"
                           value={registroForm.nombre_completo}
                           onChange={(e) =>
                             setRegistroForm((f) => ({ ...f, nombre_completo: e.target.value }))
@@ -1329,7 +1329,7 @@ export default function Paciente() {
                             }
                             sx={accessFieldSx}
                           >
-                            <MenuItem value="">No sÃ©</MenuItem>
+                            <MenuItem value="">No sé</MenuItem>
                             {TIPOS_SANGRE.map((t) => (
                               <MenuItem key={t} value={t}>
                                 {t}
@@ -1339,7 +1339,7 @@ export default function Paciente() {
                         </div>
                         <TextField
                           fullWidth
-                          label="TelÃ©fono de contacto"
+                          label="Teléfono de contacto"
                           placeholder="04141234567"
                           value={registroForm.telefono}
                           onChange={(e) =>
@@ -1349,12 +1349,12 @@ export default function Paciente() {
                             }))
                           }
                           sx={accessFieldSx}
-                          helperText="Para que la recepciÃ³n pueda contactarte por tu cita."
+                          helperText="Para que la recepción pueda contactarte por tu cita."
                         />
                         <TextField
                           fullWidth
                           type="email"
-                          label="Correo electrÃ³nico"
+                          label="Correo electrónico"
                           placeholder="usted@correo.com"
                           value={registroForm.email}
                           onChange={(e) =>
@@ -1375,8 +1375,8 @@ export default function Paciente() {
                         <TextField
                           fullWidth
                           type="password"
-                          label="ContraseÃ±a"
-                          placeholder="MÃ­nimo 6 caracteres"
+                          label="Contraseña"
+                          placeholder="Mínimo 6 caracteres"
                           value={registroForm.password}
                           onChange={(e) =>
                             setRegistroForm((f) => ({
@@ -1386,7 +1386,7 @@ export default function Paciente() {
                           }
                           sx={accessFieldSx}
                           slotProps={{ htmlInput: { autoComplete: 'new-password' } }}
-                          helperText="La usarÃ¡s junto a tu cÃ©dula para entrar al portal."
+                          helperText="La usar¡s junto a tu cédula para entrar al portal."
                         />
                         <label className="flex items-start gap-2 text-[11px] text-on-surface-variant">
                           <input
@@ -1402,7 +1402,7 @@ export default function Paciente() {
                           />
                           <span>
                             Acepto el tratamiento de mis datos personales y de salud para la
-                            gestiÃ³n de mis citas en BnaSalud.
+                            gestión de mis citas en BnaSalud.
                           </span>
                         </label>
                         <Button
@@ -1430,7 +1430,7 @@ export default function Paciente() {
                           className="flex min-h-11 w-full cursor-pointer items-center justify-center gap-1.5 rounded-xl border-2 border-secondary/25 text-sm font-bold text-secondary transition-colors duration-200 hover:border-secondary hover:bg-secondary/5"
                         >
                           <Icon name="login" className="text-base" />
-                          Â¿Ya tienes cuenta? Inicia sesiÃ³n
+                          ¿Ya tienes cuenta? Inicia sesión
                         </button>
                       </form>
                     )}
@@ -1439,7 +1439,7 @@ export default function Paciente() {
                       <p className="text-[11px] text-on-surface-variant text-center">
                         {flujoAcceso === 'login' ? (
                           <>
-                            Â¿Olvidaste tu contraseÃ±a?{' '}
+                            ¿Olvidaste tu contraseña?{' '}
                             <button
                               type="button"
                               onClick={() => {
@@ -1448,13 +1448,13 @@ export default function Paciente() {
                               }}
                               className="font-semibold text-secondary hover:underline"
                             >
-                              RecupÃ©rala por correo
+                              Recupérala por correo
                             </button>
                           </>
                         ) : null}
                         {(flujoAcceso === 'recuperar' || flujoAcceso === 'reset') && (
                           <span className="block mt-1">
-                            Â¿Ya tienes cuenta?{' '}
+                            ¿Ya tienes cuenta?{' '}
                             <button
                               type="button"
                               onClick={() => {
@@ -1464,7 +1464,7 @@ export default function Paciente() {
                               }}
                               className="font-semibold text-secondary hover:underline"
                             >
-                              Inicia sesiÃ³n
+                              Inicia sesión
                             </button>
                             .
                           </span>
@@ -1488,13 +1488,13 @@ export default function Paciente() {
                         Resumen de salud, {paciente.nombre_completo.split(' ')[0]}
                       </h2>
                       <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-on-surface-variant mt-0.5">
-                        C.I. {paciente.tipo_cedula || 'V'}-{paciente.cedula} Â· {calcularEdad(paciente.fecha_nacimiento) || 'Edad no registrada'}
+                        C.I. {paciente.tipo_cedula || 'V'}-{paciente.cedula} · {calcularEdad(paciente.fecha_nacimiento) || 'Edad no registrada'}
                       </p>
                     </div>
                   </div>
 
                   <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-                    {/* Hero: PrÃ³xima cita */}
+                    {/* Hero: Próxima cita */}
                     <section className="xl:col-span-1 relative overflow-hidden rounded-3xl text-white p-5 shadow-lg min-h-[150px] flex flex-col justify-between" style={{ background: temaCentro.gradient }}>
                       <div className="absolute inset-0 opacity-15 pointer-events-none" style={{ backgroundImage: 'repeating-linear-gradient(-45deg, rgba(255,255,255,0.35) 0 10px, transparent 10px 26px)' }} />
                       <div className="relative flex items-start justify-between gap-3">
@@ -1503,7 +1503,7 @@ export default function Paciente() {
                             <Icon name="calendar_month" filled className="text-lg" />
                           </div>
                           <div>
-                            <p className="font-mono text-[9px] uppercase tracking-[0.2em] text-white/75">PrÃ³xima Cita</p>
+                            <p className="font-mono text-[9px] uppercase tracking-[0.2em] text-white/75">Próxima Cita</p>
                             <p className="text-base font-extrabold leading-tight">
                               {proximaCita ? proximaCita.especialidad : 'Sin citas programadas'}
                             </p>
@@ -1531,14 +1531,14 @@ export default function Paciente() {
                             <p className="text-sm font-bold leading-snug">{proximaCita.centro_salud}</p>
                           </div>
                           <div className="space-y-1">
-                            <p className="font-mono text-[9px] uppercase tracking-[0.2em] text-white/70">ConfirmaciÃ³n</p>
+                            <p className="font-mono text-[9px] uppercase tracking-[0.2em] text-white/70">Confirmación</p>
                             <p className="font-mono text-sm font-bold tracking-wider">{proximaCita.codigo_confirmacion}</p>
                           </div>
                         </div>
                       ) : (
                         <div className="relative mt-4">
                           <p className="text-sm text-white/85">
-                            Reserva tu prÃ³xima consulta mÃ©dica y mantenla al dÃ­a desde tu portal.
+                            Reserva tu próxima consulta médica y mantenla al día desde tu portal.
                           </p>
                           <button
                             onClick={abrirSolicitud}
@@ -1556,7 +1556,7 @@ export default function Paciente() {
                         <div>
                           <h3 className="text-base font-bold text-primary">Historial de Consultas</h3>
                           <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-on-surface-variant">
-                            {historial ? `${historial.total_consultas} consultas registradas` : 'Historial clÃ­nico'}
+                            {historial ? `${historial.total_consultas} consultas registradas` : 'Historial clínico'}
                           </p>
                         </div>
                         <button
@@ -1573,8 +1573,8 @@ export default function Paciente() {
                         <div className="py-10 text-center text-on-surface-variant space-y-3 bg-surface-container-low rounded-3xl border border-outline-variant empty-state">
                           <Icon name="history" className="text-5xl opacity-40" />
                           <div>
-                            <p className="text-sm font-bold text-primary">AÃºn no tienes consultas registradas</p>
-                            <p className="text-xs mt-1">Tus registros mÃ©dicos aparecerÃ¡n aquÃ­ cuando te atiendas</p>
+                            <p className="text-sm font-bold text-primary">Aún no tienes consultas registradas</p>
+                            <p className="text-xs mt-1">Tus registros médicos aparecerán aquí cuando te atiendas</p>
                           </div>
                         </div>
                       ) : (
@@ -1584,8 +1584,8 @@ export default function Paciente() {
                               <tr className="border-b border-outline-variant text-left">
                                 <th className="py-1.5 pr-3 font-mono text-[10px] uppercase tracking-wider text-on-surface-variant">Fecha</th>
                                 <th className="py-1.5 pr-3 font-mono text-[10px] uppercase tracking-wider text-on-surface-variant">Especialidad</th>
-                                <th className="py-1.5 pr-3 font-mono text-[10px] uppercase tracking-wider text-on-surface-variant">DiagnÃ³stico (CIE-10)</th>
-                                <th className="py-1.5 pr-3 font-mono text-[10px] uppercase tracking-wider text-on-surface-variant">MÃ©dico</th>
+                                <th className="py-1.5 pr-3 font-mono text-[10px] uppercase tracking-wider text-on-surface-variant">Diagnóstico (CIE-10)</th>
+                                <th className="py-1.5 pr-3 font-mono text-[10px] uppercase tracking-wider text-on-surface-variant">Médico</th>
                                 <th className="py-1.5 font-mono text-[10px] uppercase tracking-wider text-on-surface-variant text-right">Acciones</th>
                               </tr>
                             </thead>
@@ -1596,7 +1596,7 @@ export default function Paciente() {
                                   <td className="py-2 pr-3 font-semibold text-primary">{c.especialidad}</td>
                                   <td className="py-2 pr-3">
                                     <span className="font-mono text-[11px] font-bold text-secondary">{c.cie10_codigo}</span>
-                                    <span className="text-on-surface-variant"> Â· {c.cie10_descripcion}</span>
+                                    <span className="text-on-surface-variant"> · {c.cie10_descripcion}</span>
                                   </td>
                                   <td className="py-2 pr-3 text-on-surface-variant">{c.medico_nombre}</td>
                                   <td className="py-2 text-right">
@@ -1668,7 +1668,7 @@ export default function Paciente() {
                               </p>
                               <p className="font-mono text-[11px] font-bold text-secondary">
                                 {c.estado === 'pendiente'
-                                  ? 'RecepciÃ³n asignarÃ¡ la hora'
+                                  ? 'Recepción asignar¡ la hora'
                                   : horaCorta(c.hora_inicio)}
                               </p>
                             </div>
@@ -1728,62 +1728,16 @@ export default function Paciente() {
                 </div>
               )}
 
-              {/* ====== ESTUDIOS ====== */}
+              {/* ====== ESTUDIOS (en construcción) ====== */}
               {seccion === 'estudios' && (
-                <div className="flex-1 overflow-y-auto ledger-scroll px-4 md:px-5 py-4 space-y-4">
-                  <div>
-                    <h2 className="font-display text-xl font-bold text-primary">Mis Estudios</h2>
-                    <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-on-surface-variant mt-1">
-                      Ã“rdenes de laboratorio, imÃ¡genes y estudios funcionales
-                    </p>
-                  </div>
-
-                  {cargando ? (
-                    <EsqueletoLista n={3} clase="space-y-3" />
-                  ) : ordenes.length === 0 ? (
-                    <EstadoVacio
-                      icono="science"
-                      titulo="No tienes Ã³rdenes de estudios"
-                      clase="py-10 text-on-surface-variant space-y-3 bg-surface-container-low rounded-3xl border border-outline-variant"
-                    >
-                      <p className="text-xs mt-1">Cuando tu mÃ©dico emita una orden, aparecerÃ¡ aquÃ­.</p>
-                    </EstadoVacio>
-                  ) : (
-                    <div className="space-y-4">
-                      {ordenes.map((o) => (
-                        <div key={o.id} className="bg-surface-container-low border rounded-xl p-4">
-                          <div className="flex flex-wrap items-center gap-3 justify-between mb-4">
-                            <div className="flex items-center gap-3">
-                              <div className="w-9 h-9 rounded-xl bg-doc-soft text-doc flex items-center justify-center">
-                                <Icon name="lab_profile" filled className="text-xl" />
-                              </div>
-                              <div>
-                                <p className="font-mono text-xs font-bold text-primary tracking-wide">
-                                  {o.comprobante_orden || o.id}
-                                </p>
-                                <p className="text-[11px] text-on-surface-variant">
-                                  {o.especialidad} Â· {formatoFecha(o.created_at)}
-                                </p>
-                              </div>
-                            </div>
-                            <EtiquetaEstado estado={o.estado} mapa={ESTADOS_ORDEN} />
-                          </div>
-                          <div className="flex flex-wrap gap-2">
-                            {(o.estudios || []).map((e, i) => (
-                              <span key={i} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface border border-outline-variant text-xs font-semibold text-primary">
-                                <Icon
-                                  name={e.tipo === 'laboratorio' ? 'bloodtype' : e.tipo === 'imagen' ? 'image' : 'monitor_heart'}
-                                  className="text-sm text-doc"
-                                />
-                                {e.nombre}
-                                {e.estado === 'completado' && <Icon name="check_circle" className="text-sm text-success" />}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                <div className="flex-1 overflow-y-auto ledger-scroll px-4 md:px-5 py-4">
+                  <EstadoVacio
+                    icono="construction"
+                    titulo="Estudios en construcción"
+                    clase="py-10 text-on-surface-variant space-y-3 bg-surface-container-low rounded-3xl border border-outline-variant"
+                  >
+                    <p className="text-xs mt-1">Pronto podrás consultar tus órdenes de estudios desde aquí.</p>
+                  </EstadoVacio>
                 </div>
               )}
 
@@ -1807,7 +1761,7 @@ export default function Paciente() {
                       titulo="No tienes notificaciones"
                       clase="py-10 text-on-surface-variant space-y-3 bg-surface-container-low rounded-3xl border border-outline-variant"
                     >
-                      <p className="text-xs mt-1">Los avisos de recetas y recordatorios de citas aparecerÃ¡n aquÃ­.</p>
+                      <p className="text-xs mt-1">Los avisos de recetas y recordatorios de citas aparecerán aquí.</p>
                     </EstadoVacio>
                   ) : (
                     <div className="space-y-3">
@@ -1831,11 +1785,11 @@ export default function Paciente() {
                               </div>
                               <p className="text-[11px] text-on-surface-variant flex flex-wrap items-center gap-x-2 gap-y-1">
                                 <span className="font-semibold uppercase tracking-wide">{conf.etiqueta}</span>
-                                <span>Â·</span>
+                                <span>·</span>
                                 <span className="font-mono">{n.destinatario || 'sin correo'}</span>
                                 {n.enviado_en && (
                                   <>
-                                    <span>Â·</span>
+                                    <span>·</span>
                                     <span className="font-mono">
                                       {formatoFecha(n.enviado_en)} {String(n.enviado_en).slice(11, 16)}
                                     </span>
@@ -1873,7 +1827,7 @@ export default function Paciente() {
         </main>
       </div>
 
-      {/* DiÃ¡logo: solicitud de cita (centro + especialidad) */}
+      {/* Di¡logo: solicitud de cita (centro + especialidad) */}
       <Dialog
         open={solicitudAbierta}
         onClose={() => !enviandoSolicitud && setSolicitudAbierta(false)}
@@ -1895,8 +1849,8 @@ export default function Paciente() {
             <div className="space-y-4">
               <p className="text-xs text-on-surface-variant">
                 Elige el centro de salud y la especialidad. No necesitas elegir
-                fecha: la recepciÃ³n del centro revisarÃ¡ tu solicitud y te asignarÃ¡
-                el mÃ©dico, la fecha y la hora segÃºn su disponibilidad.
+                fecha: la recepción del centro revisar¡ tu solicitud y te asignar¡
+                el médico, la fecha y la hora según su disponibilidad.
               </p>
 
               {solicitudError && (
@@ -1939,7 +1893,7 @@ export default function Paciente() {
                 sx={fieldSx}
                 helperText={
                   solicitudForm.centro_id && !cargandoEspecialidades && especialidadesSolicitud.length === 0
-                    ? 'Este centro no tiene especialidades con mÃ©dicos asignados.'
+                    ? 'Este centro no tiene especialidades con médicos asignados.'
                     : ' '
                 }
               >
@@ -1955,7 +1909,7 @@ export default function Paciente() {
                 multiline
                 minRows={3}
                 label="Motivo de la consulta (opcional)"
-                placeholder="Describe brevemente quÃ© te ocurre"
+                placeholder="Describe brevemente qué te ocurre"
                 value={solicitudForm.motivo}
                 onChange={(e) =>
                   setSolicitudForm((f) => ({ ...f, motivo: e.target.value }))
@@ -1991,7 +1945,7 @@ export default function Paciente() {
         </form>
       </Dialog>
 
-      {/* DiÃ¡logo: detalle de consulta / comprobante */}
+      {/* Di¡logo: detalle de consulta / comprobante */}
       <Dialog open={!!recetaAbierta} onClose={() => setRecetaAbierta(null)} maxWidth="sm" fullWidth>
         {recetaAbierta && (
           <>
@@ -2008,16 +1962,16 @@ export default function Paciente() {
                   <div>
                     <p className="font-extrabold text-primary">{recetaAbierta.especialidad}</p>
                     <p className="font-mono text-[10px] uppercase tracking-wider text-on-surface-variant">
-                      {recetaAbierta.medico_nombre} Â· {formatoFecha(recetaAbierta.fecha)}
+                      {recetaAbierta.medico_nombre} · {formatoFecha(recetaAbierta.fecha)}
                     </p>
                   </div>
                 </div>
                 {[
                   ['Motivo de consulta', recetaAbierta.motivo_consulta],
-                  ['Examen fÃ­sico', recetaAbierta.examen_fisico],
-                  ['DiagnÃ³stico', recetaAbierta.cie10_codigo ? `${recetaAbierta.cie10_codigo} Â· ${recetaAbierta.cie10_descripcion}` : ''],
+                  ['Examen físico', recetaAbierta.examen_fisico],
+                  ['Diagnóstico', recetaAbierta.cie10_codigo ? `${recetaAbierta.cie10_codigo} · ${recetaAbierta.cie10_descripcion}` : ''],
                   ['Medicinas e insumos aplicados', recetaAbierta.tratamiento],
-                  ['Indicaciones mÃ©dicas', recetaAbierta.recomendaciones],
+                  ['Indicaciones médicas', recetaAbierta.recomendaciones],
                 ]
                   .filter(([, v]) => v)
                   .map(([k, v]) => (
@@ -2029,7 +1983,7 @@ export default function Paciente() {
                 {recetaAbierta.insumos && recetaAbierta.insumos.length > 0 && (
                   <div>
                     <p className="font-mono text-[9px] uppercase tracking-[0.2em] text-on-surface-variant mb-2">
-                      Detalle de aplicaciÃ³n
+                      Detalle de aplicación
                     </p>
                     <div className="space-y-2">
                       {recetaAbierta.insumos.map((i, idx) => (
@@ -2113,11 +2067,11 @@ export default function Paciente() {
                 <div>
                   <h3 className="text-base font-bold text-primary">Posponer Cita</h3>
                   <p className="text-xs text-on-surface-variant font-normal">
-                    {citaAPosponer.especialidad} Â· {citaAPosponer.centro_salud}
+                    {citaAPosponer.especialidad} · {citaAPosponer.centro_salud}
                   </p>
                   <p className="text-[11px] font-semibold text-secondary mt-0.5">
                     <Icon name="stethoscope" className="text-[11px] mr-1 align-[-1px]" />
-                    {citaAPosponer.medico_nombre || 'AsignaciÃ³n automÃ¡tica de mÃ©dico'}
+                    {citaAPosponer.medico_nombre || 'Asignación autom¡tica de médico'}
                   </p>
                 </div>
               </div>
@@ -2134,7 +2088,7 @@ export default function Paciente() {
               {citaAPosponer.medico_nombre && (
                 <Alert severity="info" variant="outlined" sx={{ fontSize: '0.8rem' }}>
                   Solo se muestran los horarios de consulta de{' '}
-                  <strong>{citaAPosponer.medico_nombre}</strong>. PodrÃ¡s posponer solo dentro de su
+                  <strong>{citaAPosponer.medico_nombre}</strong>. Podr¡s posponer solo dentro de su
                   disponibilidad.
                 </Alert>
               )}
@@ -2156,12 +2110,12 @@ export default function Paciente() {
               {nuevaFechaPosponer && (
                 <div>
                   <label className="block text-xs font-bold text-on-surface-variant mb-1">
-                    Horario Disponible del MÃ©dico
+                    Horario Disponible del Médico
                   </label>
                   <div className="mt-2 flex flex-wrap gap-2">
                     {consultandoSlotsPosponer && (
                       <span className="text-xs text-secondary animate-pulse flex items-center gap-1 py-1">
-                        <Icon name="sync" className="text-sm animate-spin" /> Verificando disponibilidad del mÃ©dico...
+                        <Icon name="sync" className="text-sm animate-spin" /> Verificando disponibilidad del médico...
                       </span>
                     )}
                     {!consultandoSlotsPosponer && slotsPosponer.length === 0 && (
@@ -2193,7 +2147,7 @@ export default function Paciente() {
               )}
               <div>
                 <label className="block text-xs font-bold text-on-surface-variant mb-1">
-                  Motivo de la PostergaciÃ³n (Opcional)
+                  Motivo de la Postergación (Opcional)
                 </label>
                 <TextField
                   fullWidth
@@ -2221,7 +2175,7 @@ export default function Paciente() {
                 startIcon={posponiendo ? <Icon name="sync" className="text-lg animate-spin" /> : <Icon name="schedule" className="text-lg" />}
                 sx={{ background: temaCentro.gradient, borderRadius: 2, fontWeight: 700, textTransform: 'none' }}
               >
-                {posponiendo ? 'Solicitando...' : 'Confirmar PosposiciÃ³n'}
+                {posponiendo ? 'Solicitando...' : 'Confirmar Posposición'}
               </Button>
             </DialogActions>
           </form>
@@ -2238,7 +2192,7 @@ export default function Paciente() {
                 <div>
                   <h3 className="text-base font-bold text-primary">Cancelar Cita</h3>
                   <p className="text-xs text-on-surface-variant font-normal">
-                    {citaACancelar.especialidad} Â· {citaACancelar.centro_salud}
+                    {citaACancelar.especialidad} · {citaACancelar.centro_salud}
                   </p>
                 </div>
               </div>
@@ -2253,20 +2207,20 @@ export default function Paciente() {
                 </Alert>
               )}
               <Alert severity="warning" variant="outlined" sx={{ fontSize: '0.82rem' }}>
-                Esta acciÃ³n no se puede deshacer. Se cancelarÃ¡ tu cita del{' '}
+                Esta acción no se puede deshacer. Se cancelar¡ tu cita del{' '}
                 <strong>{formatoFechaLarga(citaACancelar.fecha_cita)}</strong> a las{' '}
-                <strong>{horaCorta(citaACancelar.hora_inicio)}</strong> y tu cupo se liberarÃ¡.
+                <strong>{horaCorta(citaACancelar.hora_inicio)}</strong> y tu cupo se liberar¡.
               </Alert>
               <div>
                 <label className="block text-xs font-bold text-on-surface-variant mb-1">
-                  Motivo de la CancelaciÃ³n (Opcional)
+                  Motivo de la Cancelación (Opcional)
                 </label>
                 <TextField
                   fullWidth
                   multiline
                   rows={2}
                   size="small"
-                  placeholder="Ej: No podrÃ© asistir ese dÃ­a"
+                  placeholder="Ej: No podré asistir ese día"
                   value={motivoCancelar}
                   onChange={(e) => setMotivoCancelar(e.target.value)}
                   sx={fieldSx}
@@ -2288,7 +2242,7 @@ export default function Paciente() {
                 sx={{ borderRadius: 2, fontWeight: 700, textTransform: 'none', bgcolor: 'var(--color-error)', '&:hover': { bgcolor: 'var(--color-error-dark, var(--color-error))' } }}
                 className="btn-hover-effect"
               >
-                {cancelando ? 'Cancelando...' : 'SÃ­, cancelar cita'}
+                {cancelando ? 'Cancelando...' : 'Sí, cancelar cita'}
               </Button>
             </DialogActions>
           </form>
