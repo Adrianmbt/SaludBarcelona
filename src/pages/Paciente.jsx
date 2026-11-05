@@ -1863,20 +1863,21 @@ export default function Paciente() {
                 </div>
               )}
 
-              <TextField
-                select
-                fullWidth
-                label="Centro de salud"
-                value={solicitudForm.centro_id}
-                onChange={(e) =>
-                  setSolicitudForm((f) => ({
-                    ...f,
-                    centro_id: e.target.value,
-                    especialidad_id: '',
-                  }))
-                }
-                sx={fieldSx}
-              >
+              <div className="space-y-2">
+                <TextField
+                  select
+                  fullWidth
+                  label="Centro de salud"
+                  value={solicitudForm.centro_id}
+                  onChange={(e) =>
+                    setSolicitudForm((f) => ({
+                      ...f,
+                      centro_id: e.target.value,
+                      especialidad_id: '',
+                    }))
+                  }
+                  sx={fieldSx}
+                >
                 {centrosSolicitud.map((c) => (
                   <MenuItem key={c.id} value={c.id}>
                     {c.nombre}
@@ -1919,6 +1920,7 @@ export default function Paciente() {
                 }
                 sx={fieldSx}
               />
+              </div>
             </div>
           </DialogContent>
           <DialogActions className="p-4">
