@@ -3,6 +3,7 @@ import { API } from '../api';
 import Icon from './Icon';
 import { getCentroTheme } from '../centroTheme';
 
+
 // Normaliza para comparar sin depender de tildes ni mayúsculas
 // (la base mezcla "Cardiologia" y "Cardiología").
 const sinTildes = (texto = '') =>
@@ -95,7 +96,7 @@ function Estadisticas({ centros, total }) {
 
 function Esqueleto() {
   return (
-    <div role="status" aria-label="Cargando especialidades de la red de salud">
+    <div role="status" aria-label="Cargando especialidades de la red de salud" className="py-8">
       <div className="mt-8 flex flex-wrap justify-center gap-2" aria-hidden="true">
         {[...Array(4)].map((_, i) => (
           <div key={i} className="skeleton h-12 w-40 rounded-xl" />
@@ -259,6 +260,20 @@ export default function Specialties() {
           </div>
         )}
 
+        {!cargando && !error && centros.length === 0 && (
+          <div className="mx-auto mt-8 flex max-w-md flex-col items-center gap-3 rounded-2xl border border-outline-variant/50 bg-white px-6 py-10 text-center">
+            <span className="flex h-12 w-12 items-center justify-center rounded-full bg-surface-container text-on-surface-variant">
+              <Icon name="apartment" className="text-2xl" />
+            </span>
+            <div>
+              <p className="text-sm font-bold text-primary">No hay centros activos</p>
+              <p className="mt-1 text-xs leading-relaxed text-on-surface-variant">
+                Estamos actualizando la red de salud municipal. Vuelve en un rato.
+              </p>
+            </div>
+          </div>
+        )}
+
         {!cargando && !error && centros.length > 0 && (
           <>
             <div
@@ -288,7 +303,7 @@ export default function Specialties() {
                       tabIndex={esActivo ? 0 : -1}
                       onClick={() => setActivo(centro.id)}
                       title={centro.nombre}
-                      className={`group flex shrink-0 snap-start items-center gap-2 rounded-xl border-2 px-2.5 py-2 text-left transition-all duration-200 ease-out hover:-translate-y-0.5 ${
+                      className={`group flex shrink-0 snap-start items-center gap-2 rounded-xl border-2 px-2.5 py-2 text-left transition-all duration-200 ease-out hover:-translate-y-0.5 tab-interactive ${
                         esActivo ? 'bg-white' : 'bg-white/50 hover:bg-white'
                       }`}
                       style={{
@@ -406,7 +421,7 @@ export default function Specialties() {
                       {servicios.map((servicio) => (
                         <li
                           key={servicio}
-                          className="group flex items-start gap-2 rounded-xl border border-outline-variant/40 bg-surface-container-lowest/70 p-2.5 transition-all duration-200 ease-out hover:-translate-y-0.5 hover:border-[color:var(--acento)] hover:bg-white hover:shadow-sm"
+                          className="group flex items-start gap-2 rounded-xl border border-outline-variant/40 bg-surface-container-lowest/70 p-2.5 transition-all duration-200 ease-out hover:-translate-y-0.5 hover:border-[color:var(--acento)] hover:bg-white hover:shadow-sm card-hover-effect"
                           style={{ '--acento': tema.accent }}
                         >
                           <span
@@ -436,16 +451,6 @@ export default function Specialties() {
               </div>
             )}
           </>
-        )}
-
-        {!cargando && !error && centros.length === 0 && (
-          <div className="mx-auto mt-8 flex max-w-sm flex-col items-center gap-2 rounded-2xl border border-outline-variant/50 bg-white px-6 py-10 text-center">
-            <Icon name="apartment" className="text-3xl text-on-surface-variant/60" />
-            <p className="text-sm font-bold text-primary">No hay centros activos</p>
-            <p className="text-xs text-on-surface-variant">
-              Estamos actualizando la red de salud municipal. Vuelve en un rato.
-            </p>
-          </div>
         )}
       </div>
     </section>

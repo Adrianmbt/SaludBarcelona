@@ -67,17 +67,17 @@ export default function Footer() {
                     href="https://wa.me/584129451597"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 text-sm text-white/80 hover:text-[#43ffbb] transition-colors bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl px-4 py-2.5"
+                    className="inline-flex items-center gap-2 text-sm text-white/80 hover:text-[#43ffbb] transition-all transition-shadow btn-hover-effect bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl px-4 py-2.5"
                   >
                     <WhatsApp className="h-4 w-4 text-[#43ffbb]" /> +58 412 945 1597
                   </a>
                 </li>
                 <li className="flex items-center justify-center md:justify-end">
                   <a
-                    href="https://instagram.com"
+                    href="https://www.instagram.com/isaludbna/"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 text-sm text-white/80 hover:text-[#50d9fe] transition-colors bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl px-4 py-2.5"
+                    className="inline-flex items-center gap-2 text-sm text-white/80 hover:text-[#50d9fe] transition-all transition-shadow btn-hover-effect bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl px-4 py-2.5"
                   >
                     <Instagram className="h-4 w-4 text-[#50d9fe]" /> Instagram
                   </a>

@@ -19,6 +19,11 @@ import Icon from '../components/Icon';
 import HistorialLinea from '../components/HistorialLinea';
 import { API, parseCedula, cerrarSesion, marcarUltimaSesion } from '../api';
 import { getCentroTheme } from '../centroTheme';
+import {
+  EstadoVacio,
+  EsqueletoPagina,
+  EsqueletoLista,
+} from '../components/Estado';
 
 const SECCIONES = [
   { id: 'dashboard', etiqueta: 'Dashboard', detalle: 'Resumen de salud', icono: 'grid_view' },
@@ -222,7 +227,6 @@ export default function Paciente() {
     centro_id: '',
     especialidad_id: '',
     motivo: '',
-    fecha_preferida: '',
   });
   const [centrosSolicitud, setCentrosSolicitud] = useState([]);
   const [especialidadesSolicitud, setEspecialidadesSolicitud] = useState([]);
@@ -442,7 +446,6 @@ export default function Paciente() {
       centro_id: '',
       especialidad_id: '',
       motivo: '',
-      fecha_preferida: '',
     });
     setEspecialidadesSolicitud([]);
     setSolicitudAbierta(true);
@@ -503,7 +506,6 @@ export default function Paciente() {
         centro_id: Number(solicitudForm.centro_id),
         especialidad_id: Number(solicitudForm.especialidad_id),
         motivo: solicitudForm.motivo.trim() || null,
-        fecha_preferida: solicitudForm.fecha_preferida || null,
       });
       setCitas((prev) => [nueva, ...prev]);
       setSolicitudAbierta(false);
@@ -529,7 +531,7 @@ export default function Paciente() {
       return;
     }
     try {
-      const res = await API.recuperarPin(ident.cedula, recuperarForm.email);
+      const res = await API.recuperarContrasena(ident.cedula, recuperarForm.email);
       setInfoEntrada(res.mensaje || 'Se envió el código a su correo.');
       setRecuperarForm((f) => ({ ...f, cedula: ident.cedula }));
       setFlujoAcceso('reset');
@@ -540,7 +542,7 @@ export default function Paciente() {
     }
   };
 
-  const restablecerPin = async (e) => {
+  const restablecerContrasena = async (e) => {
     e.preventDefault();
     setRecuperando(true);
     setErrorEntrada('');
@@ -552,7 +554,7 @@ export default function Paciente() {
       return;
     }
     try {
-      await API.resetPin(recuperarForm.cedula, recuperarForm.codigo, password);
+      await API.restablecerContrasena(recuperarForm.cedula, recuperarForm.codigo, password);
       setFlujoAcceso('login');
       setRecuperarForm({ cedula: '', email: '', codigo: '', password: '' });
       setInfoEntrada('¡Contraseña restablecida! Inicia sesión con tu cédula y la nueva contraseña.');
@@ -939,7 +941,7 @@ export default function Paciente() {
             abrirSolicitud();
             setNavAbierta(false);
           }}
-          className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold text-white shadow-md active:scale-[0.98] transition-all"
+          className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold text-white shadow-md transition-all btn-hover-effect"
           style={{ background: temaCentro.gradient }}
         >
           <Icon name="add_circle" className="text-base" /> Solicitar cita
@@ -1046,7 +1048,7 @@ export default function Paciente() {
                 setSeccion('notificaciones');
                 setAnchorNotif(null);
               }}
-              className="flex items-center gap-1 text-xs font-bold text-secondary hover:text-secondary-light transition-colors"
+              className="flex items-center gap-1 text-xs font-bold text-secondary hover:text-secondary-light transition-all btn-hover-effect"
             >
               Ver todas <Icon name="arrow_forward" className="text-sm" />
             </button>
@@ -1054,10 +1056,13 @@ export default function Paciente() {
 
           <div className="max-h-[340px] overflow-y-auto ledger-scroll">
             {notificaciones.length === 0 ? (
-              <div className="px-4 py-8 text-center text-on-surface-variant space-y-2">
-                <Icon name="notifications_off" className="text-3xl opacity-40" />
-                <p className="text-xs font-medium">No tienes notificaciones todavía.</p>
-              </div>
+              <EstadoVacio
+                icono="notifications_off"
+                titulo="No tienes notificaciones"
+                clase="py-8 text-center text-on-surface-variant space-y-3 bg-surface-container-low rounded-xl border border-outline-variant"
+              >
+                <p className="text-xs mt-1">Revisa esta sección para actualizaciones de tus citas y recetas</p>
+              </EstadoVacio>
             ) : (
               notificaciones.slice(0, 5).map((n) => {
                 const conf = TIPOS_NOTIFICACION[n.tipo] || { icono: 'notifications', etiqueta: n.tipo };
@@ -1100,51 +1105,68 @@ export default function Paciente() {
 
       <div className="flex flex-1 min-h-0 overflow-hidden">
         {paciente && (
-        <aside
-          className={`shrink-0 w-[min(280px,85vw)] bg-surface border-r border-outline-variant flex flex-col transition-all duration-300 ease-out ${
-            navAbierta ? 'ml-0' : '-ml-[min(280px,85vw)]'
-          }`}
-          aria-label="Navegación del portal"
-        >
-          {contenidoNav}
-        </aside>
+          <>
+            {navAbierta && (
+              <div
+                className="fixed inset-0 z-30 bg-black/25 lg:hidden"
+                onClick={() => setNavAbierta(false)}
+                aria-hidden="true"
+              />
+            )}
+            <aside
+              className={`shrink-0 w-[min(280px,85vw)] bg-surface border-r border-outline-variant flex flex-col z-40 transition-all duration-300 ease-out ${
+                navAbierta ? 'ml-0' : '-ml-[min(280px,85vw)]'
+              }`}
+              aria-label="Navegación del portal"
+            >
+              {contenidoNav}
+            </aside>
+          </>
         )}
 
         <main className="flex-1 min-w-0 flex flex-col bg-surface overflow-hidden">
           {!paciente ? (
             <div className="flex-1 overflow-y-auto ledger-scroll flex items-center justify-center p-6" style={{ background: '#F8FAFC', ...instVars }}>
-              <div className="w-full max-w-md">
-                <div className="bg-surface-container-low border border-outline-variant rounded-3xl p-8 relative overflow-hidden shadow-xl">
-                  <div
-                    className="absolute top-0 inset-x-0 h-1.5"
-                    style={{ background: 'linear-gradient(90deg, #3B98D4 0%, #1A4B7C 45%, #38B000 78%, #D90429 100%)' }}
-                    aria-hidden="true"
-                  />
-                  <div className="absolute -top-20 -right-20 w-56 h-56 bg-primary/10 rounded-full pointer-events-none" />
-                  <div className="absolute -bottom-24 -left-16 w-48 h-48 bg-secondary/10 rounded-full pointer-events-none" />
-                  <div className="relative">
-                    <div className="w-full max-w-[240px] mx-auto mb-5 rounded-2xl bg-white border border-outline-variant shadow-md px-3 py-2.5 flex items-center justify-center overflow-hidden">
-                      <img src="/identidad visual/InstitutoSalud.jpeg" alt="Logo Instituto de Salud Barcelona" loading="lazy" className="w-full h-auto max-h-16 object-contain" />
-                    </div>
-                    <h2 className="font-display text-2xl font-bold text-center text-secondary">Portal del Paciente</h2>
-                    <p className="text-sm text-on-surface-variant text-center mt-1.5">
-                      Ingresa tu cédula y tu contraseña para consultar tu historial clínico, citas y estudios.
-                    </p>
-
-                    {errorEntrada && (
-                      <div className="mt-5 p-3 bg-error-container rounded-xl border border-error/20 flex items-center gap-2" role="alert">
-                        <Icon name="error" className="text-error text-lg" />
-                        <p className="text-xs font-semibold text-error">{errorEntrada}</p>
+              {entrando ? (
+                <div className="w-full max-w-sm">
+                  <EsqueletoPagina avatar lineas={4} />
+                  <p className="mt-6 text-center text-sm text-on-surface-variant">
+                    Verificando tus datos…
+                  </p>
+                </div>
+              ) : (
+                <div className="w-full max-w-md">
+                  <div className="bg-surface-container-low border border-outline-variant rounded-3xl p-8 relative overflow-hidden shadow-xl">
+                    <div
+                      className="absolute top-0 inset-x-0 h-1.5"
+                      style={{ background: 'linear-gradient(90deg, #3B98D4 0%, #1A4B7C 45%, #38B000 78%, #D90429 100%)' }}
+                      aria-hidden="true"
+                    />
+                    <div className="absolute -top-20 -right-20 w-56 h-56 bg-primary/10 rounded-full pointer-events-none" />
+                    <div className="absolute -bottom-24 -left-16 w-48 h-48 bg-secondary/10 rounded-full pointer-events-none" />
+                    <div className="relative">
+                      <div className="w-full max-w-[240px] mx-auto mb-5 rounded-2xl bg-white border border-outline-variant shadow-md px-3 py-2.5 flex items-center justify-center overflow-hidden">
+                        <img src="/identidad visual/InstitutoSalud.jpeg" alt="Logo Instituto de Salud Barcelona" loading="lazy" className="w-full h-auto max-h-16 object-contain" />
                       </div>
-                    )}
-                    {infoEntrada && (
-                      <div className="mt-5 p-3 bg-doc-soft rounded-xl border border-doc/20 flex items-start gap-2" role="status">
-                        <Icon name="info" className="text-doc text-lg shrink-0" />
-                        <p className="text-xs font-semibold text-doc-deep">{infoEntrada}</p>
-                      </div>
-                    )}
+                      <h2 className="font-display text-2xl font-bold text-center text-secondary">Portal del Paciente</h2>
+                      <p className="text-sm text-on-surface-variant text-center mt-1.5">
+                        Ingresa tu cédula y tu contraseña para consultar tu historial clínico, citas y estudios.
+                      </p>
 
-                    {flujoAcceso === 'login' && (
+                      {errorEntrada && (
+                        <div className="mt-5 p-3 rounded-xl border border-error/20 bg-error-container flex items-center gap-2" role="alert">
+                          <Icon name="error" className="text-error text-lg" />
+                          <p className="text-xs font-semibold text-error">{errorEntrada}</p>
+                        </div>
+                      )}
+                      {infoEntrada && (
+                        <div className="mt-5 p-3 rounded-xl border border-doc/20 bg-doc-soft flex items-start gap-2" role="status">
+                          <Icon name="info" className="text-doc text-lg shrink-0" />
+                          <p className="text-xs font-semibold text-doc-deep">{infoEntrada}</p>
+                        </div>
+                      )}
+
+                      {flujoAcceso === 'login' && (
                       <form
                         className="mt-6 flex flex-col gap-6"
                         onSubmit={(e) => {
@@ -1282,7 +1304,7 @@ export default function Paciente() {
                     )}
 
                     {flujoAcceso === 'reset' && (
-                      <form className="mt-5 flex flex-col gap-5" onSubmit={restablecerPin}>
+                      <form className="mt-5 flex flex-col gap-5" onSubmit={restablecerContrasena}>
                         <div className="flex items-center gap-2">
                           <Icon name="password" className="text-doc" />
                           <p className="text-sm font-bold text-primary">Crear una contraseña nueva</p>
@@ -1581,6 +1603,8 @@ export default function Paciente() {
                   </div>
                 </div>
               </div>
+            )
+            }
             </div>
           ) : (
             <>
@@ -1682,20 +1706,21 @@ export default function Paciente() {
                         </div>
                         <button
                           onClick={() => setSeccion('historial')}
-                          className="flex items-center gap-1 text-xs font-bold text-secondary hover:text-secondary-light transition-colors"
+                          className="flex items-center gap-1 text-xs font-bold text-secondary hover:text-secondary-light transition-all btn-hover-effect"
                         >
                           Ver todas <Icon name="arrow_forward" className="text-sm" />
                         </button>
                       </div>
 
                       {cargando ? (
-                        <div className="py-8 text-center text-on-surface-variant text-sm animate-pulse">
-                          Cargando historial...
-                        </div>
+                        <EsqueletoLista n={4} clase="space-y-4" />
                       ) : !historial || historial.historial.length === 0 ? (
-                        <div className="py-10 text-center text-on-surface-variant space-y-2">
-                          <Icon name="history" className="text-4xl opacity-40" />
-                          <p className="text-sm font-medium">Aún no tienes consultas registradas.</p>
+                        <div className="py-10 text-center text-on-surface-variant space-y-3 bg-surface-container-low rounded-3xl border border-outline-variant empty-state">
+                          <Icon name="history" className="text-5xl opacity-40" />
+                          <div>
+                            <p className="text-sm font-bold text-primary">Aún no tienes consultas registradas</p>
+                            <p className="text-xs mt-1">Tus registros médicos aparecerán aquí cuando te atiendas</p>
+                          </div>
                         </div>
                       ) : (
                         <div className="overflow-x-auto">
@@ -1774,7 +1799,7 @@ export default function Paciente() {
                         </div>
                         <button
                           onClick={abrirPerfil}
-                          className="mt-2 w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-secondary border border-secondary/40 hover:bg-secondary/5 transition-colors"
+                          className="mt-2 w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-secondary border border-secondary/40 hover:bg-secondary/5 transition-colors btn-hover-effect"
                         >
                           <Icon name="edit" className="text-base" /> Editar ficha
                         </button>
@@ -1805,12 +1830,17 @@ export default function Paciente() {
                   </div>
 
                   {cargando ? (
-                    <div className="py-8 text-center text-on-surface-variant text-sm animate-pulse">Cargando citas...</div>
+                    <EsqueletoLista n={3} clase="space-y-3" />
                   ) : citas.length === 0 ? (
-                    <div className="py-6 text-center text-on-surface-variant space-y-2 bg-surface-container-low rounded-3xl border border-outline-variant">
-                      <Icon name="event_busy" className="text-4xl opacity-40" />
-                      <p className="text-sm font-medium">No tienes citas registradas.</p>
-                    </div>
+                    <EstadoVacio
+                      icono="event_busy"
+                      titulo="No tienes citas registradas"
+                      accion={abrirSolicitud}
+                      accionLabel="Solicitar cita"
+                      clase="py-10 text-on-surface-variant space-y-3 bg-surface-container-low rounded-3xl border border-outline-variant"
+                    >
+                      <p className="text-xs mt-1">Planifica tu salud y solicita una cita hoy</p>
+                    </EstadoVacio>
                   ) : (
                     <div className="space-y-3">
                       {citas.map((c) => (
@@ -1858,6 +1888,7 @@ export default function Paciente() {
                                 }}
                                 startIcon={<Icon name="close" className="text-sm" />}
                                 sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600, color: 'var(--color-error)' }}
+                                className="btn-hover-effect"
                               >
                                 Cancelar cita
                               </Button>
@@ -1873,6 +1904,7 @@ export default function Paciente() {
                                   setPosponerError('');
                                 }}
                                 sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600, color: 'var(--color-secondary)' }}
+                                className="btn-hover-effect"
                               >
                                 Posponer cita
                               </Button>
@@ -1896,13 +1928,15 @@ export default function Paciente() {
                   </div>
 
                   {cargando ? (
-                    <div className="py-8 text-center text-on-surface-variant text-sm animate-pulse">Cargando estudios...</div>
+                    <EsqueletoLista n={3} clase="space-y-3" />
                   ) : ordenes.length === 0 ? (
-                    <div className="py-6 text-center text-on-surface-variant space-y-2 bg-surface-container-low rounded-3xl border border-outline-variant">
-                      <Icon name="science" className="text-4xl opacity-40" />
-                      <p className="text-sm font-medium">No tienes órdenes de estudios.</p>
-                      <p className="text-xs">Cuando tu médico emita una orden, aparecerá aquí.</p>
-                    </div>
+                    <EstadoVacio
+                      icono="science"
+                      titulo="No tienes órdenes de estudios"
+                      clase="py-10 text-on-surface-variant space-y-3 bg-surface-container-low rounded-3xl border border-outline-variant"
+                    >
+                      <p className="text-xs mt-1">Cuando tu médico emita una orden, aparecerá aquí.</p>
+                    </EstadoVacio>
                   ) : (
                     <div className="space-y-4">
                       {ordenes.map((o) => (
@@ -1953,15 +1987,15 @@ export default function Paciente() {
                   </div>
 
                   {cargando ? (
-                    <div className="py-8 text-center text-on-surface-variant text-sm animate-pulse">
-                      Cargando recetas...
-                    </div>
+                    <EsqueletoLista n={3} clase="space-y-3" />
                   ) : recetas.length === 0 ? (
-                    <div className="py-6 text-center text-on-surface-variant space-y-2 bg-surface-container-low rounded-3xl border border-outline-variant">
-                      <Icon name="medication" className="text-4xl opacity-40" />
-                      <p className="text-sm font-medium">No tienes recetas registradas.</p>
-                      <p className="text-xs">Cuando tu médico emita una receta, aparecerá aquí con su estado.</p>
-                    </div>
+                    <EstadoVacio
+                      icono="medication"
+                      titulo="No tienes recetas registradas"
+                      clase="py-10 text-on-surface-variant space-y-3 bg-surface-container-low rounded-3xl border border-outline-variant"
+                    >
+                      <p className="text-xs mt-1">Cuando tu médico emita una receta, aparecerá aquí con su estado.</p>
+                    </EstadoVacio>
                   ) : (
                     <div className="space-y-4">
                       {recetas.map((rx) => {
@@ -2073,17 +2107,15 @@ export default function Paciente() {
                   </div>
 
                   {cargando ? (
-                    <div className="py-8 text-center text-on-surface-variant text-sm animate-pulse">
-                      Cargando notificaciones...
-                    </div>
+                    <EsqueletoLista n={3} clase="space-y-3" />
                   ) : notificaciones.length === 0 ? (
-                    <div className="py-6 text-center text-on-surface-variant space-y-2 bg-surface-container-low rounded-3xl border border-outline-variant">
-                      <Icon name="notifications_off" className="text-4xl opacity-40" />
-                      <p className="text-sm font-medium">No tienes notificaciones todavía.</p>
-                      <p className="text-xs">
-                        Los avisos de recetas y recordatorios de citas aparecerán aquí.
-                      </p>
-                    </div>
+                    <EstadoVacio
+                      icono="notifications_off"
+                      titulo="No tienes notificaciones"
+                      clase="py-10 text-on-surface-variant space-y-3 bg-surface-container-low rounded-3xl border border-outline-variant"
+                    >
+                      <p className="text-xs mt-1">Los avisos de recetas y recordatorios de citas aparecerán aquí.</p>
+                    </EstadoVacio>
                   ) : (
                     <div className="space-y-3">
                       {notificaciones.map((n) => {
@@ -2183,9 +2215,7 @@ export default function Paciente() {
                       </section>
 
                       {cargando ? (
-                        <div className="py-8 text-center text-on-surface-variant text-sm animate-pulse">
-                          Cargando historial...
-                        </div>
+                        <EsqueletoLista n={4} clase="space-y-4" />
                       ) : (
                         <section className="bg-surface-container-low border border-outline-variant rounded-2xl p-4">
                           <div className="flex items-center justify-between gap-3 mb-3">
@@ -2551,9 +2581,9 @@ export default function Paciente() {
           <DialogContent dividers>
             <div className="space-y-4">
               <p className="text-xs text-on-surface-variant">
-                Elige el centro de salud y la especialidad. La recepción del centro
-                revisará tu solicitud y te asignará la fecha y la hora según la
-                disponibilidad del médico.
+                Elige el centro de salud y la especialidad. No necesitas elegir
+                fecha: la recepción del centro revisará tu solicitud y te asignará
+                el médico, la fecha y la hora según su disponibilidad.
               </p>
 
               {solicitudError && (
@@ -2606,21 +2636,6 @@ export default function Paciente() {
                   </MenuItem>
                 ))}
               </TextField>
-
-              <TextField
-                fullWidth
-                type="date"
-                label="Fecha preferida (opcional)"
-                value={solicitudForm.fecha_preferida}
-                onChange={(e) =>
-                  setSolicitudForm((f) => ({ ...f, fecha_preferida: e.target.value }))
-                }
-                sx={fieldSx}
-                slotProps={{
-                  inputLabel: { shrink: true },
-                  htmlInput: { min: new Date().toISOString().slice(0, 10) },
-                }}
-              />
 
               <TextField
                 fullWidth
@@ -3076,6 +3091,7 @@ export default function Paciente() {
                 disabled={cancelando}
                 startIcon={cancelando ? <Icon name="sync" className="text-lg animate-spin" /> : <Icon name="close" className="text-lg" />}
                 sx={{ borderRadius: 2, fontWeight: 700, textTransform: 'none', bgcolor: 'var(--color-error)', '&:hover': { bgcolor: 'var(--color-error-dark, var(--color-error))' } }}
+                className="btn-hover-effect"
               >
                 {cancelando ? 'Cancelando...' : 'Sí, cancelar cita'}
               </Button>

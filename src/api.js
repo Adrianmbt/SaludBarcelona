@@ -208,9 +208,9 @@ export const API = {
     ),
   asignarCita: (citaId, payload) =>
     apiFetch(`/citas/${citaId}/asignar`, { method: 'PATCH', body: payload, tipo: 'staff' }),
-  recuperarPin: (cedula, email) =>
+  recuperarContrasena: (cedula, email) =>
     apiFetch('/auth/paciente/recuperar', { method: 'POST', body: { cedula, email } }),
-  resetPin: (cedula, codigo, password) =>
+  restablecerContrasena: (cedula, codigo, password) =>
     apiFetch('/auth/paciente/reset', { method: 'POST', body: { cedula, codigo, password } }),
 
   /* === Panel institucional (admin_sistemas / director) === */

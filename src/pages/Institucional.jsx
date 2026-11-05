@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Icon from '../components/Icon';
+import { EsqueletoKpi, EsqueletoPanelBarras, EsqueletoTablaCentros } from '../components/Skeletons';
 import {
   API,
   guardarSesionInstitucional,
@@ -93,7 +94,7 @@ function Marca({ compacta = false }) {
 
 function TarjetaKpi({ icono, etiqueta, valor, detalle, acento = 'text-secondary' }) {
   return (
-    <div className="group relative overflow-hidden rounded-2xl border border-outline-variant/60 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+    <div className="group relative overflow-hidden rounded-2xl border border-outline-variant/60 bg-white p-4 shadow-sm card-hover-effect">
       <span
         className="absolute inset-x-0 top-0 h-[3px] bg-gradient-to-r from-secondary via-health to-secondary-container opacity-70"
         aria-hidden="true"
@@ -323,19 +324,10 @@ function AccesoInstitucional({ onEntrar }) {
               <button
                 type="submit"
                 disabled={enviando}
-                className="flex w-full items-center justify-center gap-2 rounded-xl bg-secondary px-4 py-3 text-sm font-semibold text-white transition hover:bg-secondary-dark focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary disabled:cursor-not-allowed disabled:opacity-60"
+                className={`flex w-full items-center justify-center gap-2 rounded-xl bg-secondary px-4 py-3 text-sm font-semibold text-white transition hover:bg-secondary-dark focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary disabled:cursor-not-allowed disabled:opacity-60 btn-hover-effect ${enviando ? 'btn-loading' : ''}`}
               >
-                {enviando ? (
-                  <>
-                    <Icon name="progress_activity" className="animate-spin text-lg" />
-                    Verificando…
-                  </>
-                ) : (
-                  <>
-                    Entrar al panel
-                    <Icon name="arrow_forward" className="text-lg" />
-                  </>
-                )}
+                {enviando ? 'Verificando…' : 'Entrar al panel'}
+                <Icon name="arrow_forward" className="text-lg" />
               </button>
             </form>
 
@@ -406,7 +398,7 @@ function TablaCentros({ centros, seleccionado, onSeleccionar, totales }) {
               return (
                 <tr
                   key={centro.id}
-                  className={`cursor-pointer transition ${
+                  className={`cursor-pointer transition list-item-interactive ${
                     activo ? 'bg-secondary/10' : 'hover:bg-surface-container-low/60'
                   }`}
                   onClick={() => onSeleccionar(String(centro.id))}
@@ -674,7 +666,7 @@ function Panel({ sesion, onSalir }) {
             type="button"
             onClick={() => setCentroId('general')}
             aria-pressed={centroId === 'general'}
-            className={`shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-semibold transition ${
+            className={`shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-semibold transition tab-interactive ${
               centroId === 'general'
                 ? 'border-secondary bg-secondary text-white'
                 : 'border-outline-variant/70 bg-white text-on-surface-variant hover:border-secondary/50 hover:text-secondary'
@@ -688,7 +680,7 @@ function Panel({ sesion, onSalir }) {
               type="button"
               onClick={() => setCentroId(String(c.id))}
               aria-pressed={String(c.id) === centroId}
-              className={`shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-semibold transition ${
+              className={`shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-semibold transition tab-interactive ${
                 String(c.id) === centroId
                   ? 'border-secondary bg-secondary text-white'
                   : 'border-outline-variant/70 bg-white text-on-surface-variant hover:border-secondary/50 hover:text-secondary'
@@ -719,9 +711,27 @@ function Panel({ sesion, onSalir }) {
         )}
 
         {cargando && !datos ? (
-          <div role="status" aria-live="polite" className="py-20 text-center">
-            <Icon name="progress_activity" className="animate-spin text-3xl text-secondary" />
-            <p className="mt-3 text-sm text-on-surface-variant">Cargando indicadores…</p>
+          <div className="space-y-5">
+            <section aria-label="Indicadores principales">
+              <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 xl:grid-cols-6">
+                {[1, 2, 3, 4, 5, 6].map((i) => (
+                  <EsqueletoKpi key={i} />
+                ))}
+              </div>
+            </section>
+
+            <div className="grid gap-4 lg:grid-cols-3">
+              <EsqueletoPanelBarras />
+              <EsqueletoPanelBarras />
+              <EsqueletoPanelBarras />
+            </div>
+
+            <EsqueletoTablaCentros />
+
+            <div className="grid gap-4 lg:grid-cols-2">
+              <EsqueletoPanelBarras />
+              <EsqueletoPanelBarras />
+            </div>
           </div>
         ) : datos ? (
           <div className="space-y-5" aria-busy={cargando}>

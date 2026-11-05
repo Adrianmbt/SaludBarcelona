@@ -82,7 +82,7 @@ export default function Navbar() {
           </div>
           <Link
             to="/paciente"
-            className="hidden sm:flex w-8 h-8 items-center justify-center hover:bg-secondary/10 rounded-full transition-all text-on-surface"
+            className="hidden sm:flex w-8 h-8 items-center justify-center hover:bg-secondary/10 rounded-full transition-all text-on-surface btn-hover-effect"
             aria-label="Portal del paciente"
             title="Portal del paciente"
           >
@@ -125,7 +125,7 @@ export default function Navbar() {
               <Link
                 to="/paciente"
                 onClick={() => setMenuAbierto(false)}
-                className="flex items-center gap-3 py-2.5 px-3 text-sm font-semibold text-primary hover:text-secondary rounded-xl hover:bg-secondary/5"
+                className="flex items-center gap-3 py-2.5 px-3 text-sm font-semibold text-primary hover:text-secondary rounded-xl hover:bg-secondary/5 transition-all btn-hover-effect"
               >
                 <Icon name="account_circle" className="text-xl" /> Portal del paciente
               </Link>

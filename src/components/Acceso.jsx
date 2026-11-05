@@ -11,7 +11,7 @@ export default function Acceso({ onAcceder }) {
     >
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6">
         <div
-          className="relative overflow-hidden rounded-3xl border border-health/20 shadow-lg shadow-secondary/10"
+          className="relative overflow-hidden rounded-3xl border border-health/20 shadow-lg shadow-secondary/10 card-hover-effect"
           data-aos="fade-up"
         >
           <div
@@ -62,7 +62,7 @@ export default function Acceso({ onAcceder }) {
               <button
                 type="button"
                 onClick={onAcceder}
-                className="group inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-xl bg-white px-6 text-sm font-extrabold text-secondary-dark shadow-lg transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-xl active:scale-[0.98]"
+                className="group inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-xl bg-white px-6 text-sm font-extrabold text-secondary-dark shadow-lg transition-all duration-200 ease-out btn-hover-effect"
               >
                 Iniciar sesión o registrarme
                 <Icon
