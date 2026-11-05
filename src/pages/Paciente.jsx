@@ -1646,8 +1646,6 @@ export default function Paciente() {
                     <EstadoVacio
                       icono="event_busy"
                       titulo="No tienes citas registradas"
-                      accion={abrirSolicitud}
-                      accionLabel="Solicitar cita"
                       clase="py-10 text-on-surface-variant space-y-3 bg-surface-container-low rounded-3xl border border-outline-variant"
                     >
                       <p className="text-xs mt-1">Planifica tu salud y solicita una cita hoy</p>
@@ -1835,7 +1833,12 @@ export default function Paciente() {
         fullWidth
       >
         <DialogTitle className="flex items-center justify-between gap-3">
-          <span className="font-display text-xl font-bold text-primary">Solicitar cita</span>
+          <div className="flex items-center gap-3">
+            <span className="w-8 h-8 rounded-xl bg-secondary/10 text-secondary flex items-center justify-center shrink-0">
+              <Icon name="calendar_month" filled className="text-base" />
+            </span>
+            <span className="font-display text-xl font-bold text-primary">Solicitar cita</span>
+          </div>
           <IconButton
             onClick={() => setSolicitudAbierta(false)}
             disabled={enviandoSolicitud}
@@ -1846,10 +1849,10 @@ export default function Paciente() {
         </DialogTitle>
         <form onSubmit={enviarSolicitud}>
           <DialogContent dividers>
-            <div className="space-y-4">
-              <p className="text-xs text-on-surface-variant">
+            <div className="space-y-6">
+              <p className="text-sm text-on-surface-variant leading-relaxed">
                 Elige el centro de salud y la especialidad. No necesitas elegir
-                fecha: la recepción del centro revisar¡ tu solicitud y te asignar¡
+                fecha: la recepción del centro revisará tu solicitud y te asignará
                 el médico, la fecha y la hora según su disponibilidad.
               </p>
 
