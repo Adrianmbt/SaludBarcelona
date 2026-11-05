@@ -26,17 +26,5 @@ export default defineConfig(({ mode }) => {
         },
       },
     },
-    build: {
-      outDir: 'dist',
-      assetsDir: 'assets',
-      sourcemap: false,
-      rollupOptions: {
-        output: {
-          assetFileNames: 'assets/[name]-[hash][extname]',
-          chunkFileNames: 'assets/[name]-[hash][extname]',
-          entryFileNames: 'assets/[name]-[hash][extname]',
-        },
-      },
-    },
   }
 })
