@@ -1,4 +1,4 @@
-import Icon from './Icon';
+﻿import Icon from './Icon';
 
 const BENEFICIOS = ['Citas en línea', 'Historial clínico', 'Recordatorios'];
 

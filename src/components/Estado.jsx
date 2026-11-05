@@ -1,4 +1,4 @@
-import Icon from './Icon';
+﻿import Icon from './Icon';
 
 /* ════════════════════════════════════════════════════════════════
    ESTADOS DE INTERFAZ (regla 6)

@@ -1,4 +1,4 @@
-import HeroCarrusel from './HeroCarrusel';
+﻿import HeroCarrusel from './HeroCarrusel';
 
 export default function Hero({ onSolicitarCita }) {
   return (

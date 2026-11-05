@@ -1894,7 +1894,7 @@ export default function Paciente() {
                   setSolicitudForm((f) => ({ ...f, especialidad_id: e.target.value }))
                 }
                 disabled={!solicitudForm.centro_id || cargandoEspecialidades}
-                sx={fieldSx}
+                sx={{ ...fieldSx, mt: 2.5 }}
                 helperText={
                   solicitudForm.centro_id && !cargandoEspecialidades && especialidadesSolicitud.length === 0
                     ? 'Este centro no tiene especialidades con médicos asignados.'
