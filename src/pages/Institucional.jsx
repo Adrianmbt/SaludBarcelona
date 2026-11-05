@@ -2,6 +2,7 @@
 import { Link } from 'react-router-dom';
 import Icon from '../components/Icon';
 import { EsqueletoKpi, EsqueletoPanelBarras, EsqueletoTablaCentros } from '../components/Skeletons';
+import { EstadoVacio } from '../components/Estado';
 import {
   API,
   guardarSesionInstitucional,
@@ -477,6 +478,136 @@ function TablaCentros({ centros, seleccionado, onSeleccionar, totales }) {
   );
 }
 
+/* ════════════════════════════════════════════════════════════════
+   Sección Laboral (solo admin_sistemas)
+   Reposos médicos emitidos a trabajadores, para cotejo con Recursos Humanos.
+   Muestra las personas con más reposos por instituto o ente.
+   ════════════════════════════════════════════════════════════════ */
+
+function PanelLaboral({ reposos = [], cargando }) {
+  if (cargando) {
+    return (
+      <section className="rounded-2xl border border-outline-variant/60 bg-white p-4 shadow-sm">
+        <header className="mb-3">
+          <h3 className="font-display text-base font-semibold text-primary">
+            Reposos médicos laborales
+          </h3>
+          <p className="text-[11px] text-on-surface-variant">
+            Cotejo de reposos emitidos a trabajadores con Recursos Humanos
+          </p>
+        </header>
+        <div className="space-y-3">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="rounded-xl border border-outline-variant/30 bg-white p-4">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg skeleton" />
+                  <div className="space-y-2">
+                    <div className="h-3 w-32 skeleton rounded" />
+                    <div className="h-2 w-20 skeleton rounded" />
+                  </div>
+                </div>
+                <div className="h-3 w-24 skeleton rounded" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section className="rounded-2xl border border-outline-variant/60 bg-white p-4 shadow-sm">
+      <header className="mb-3 flex items-center justify-between gap-2">
+        <div>
+          <h3 className="font-display text-base font-semibold text-primary">
+            Reposos médicos laborales
+          </h3>
+          <p className="text-[11px] text-on-surface-variant">
+            Cotejo de reposos emitidos a trabajadores con Recursos Humanos
+          </p>
+        </div>
+        <span
+          className={`rounded-full px-2.5 py-1 text-[10px] font-semibold ${
+            reposos.length > 0 ? 'bg-amber-soft text-amber' : 'bg-mint-soft text-mint'
+          }`}
+        >
+          {reposos.length > 0 ? 'Registros disponibles' : 'Sin registros'}
+        </span>
+      </header>
+
+      {reposos.length === 0 ? (
+        <EstadoVacio
+          icono="work"
+          titulo="No hay reposos médicos registrados"
+          clase="py-10 text-on-surface-variant space-y-3 bg-surface-container-low rounded-3xl border border-outline-variant"
+        >
+          <p className="text-xs mt-1">
+            Los reposos médicos emitidos a trabajadores aparecerán aquí para su
+            cotejo con Recursos Humanos.
+          </p>
+        </EstadoVacio>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[640px] border-collapse text-left">
+            <caption className="sr-only">
+              Reposos médicos emitidos por persona, instituto o ente
+            </caption>
+            <thead>
+              <tr className="bg-surface-container-low text-[10px] uppercase tracking-wider text-on-surface-variant">
+                <th scope="col" className="px-4 py-3 font-semibold text-left">
+                  Persona trabajadora
+                </th>
+                <th scope="col" className="px-3 py-3 font-semibold text-left">
+                  Instituto / Ente
+                </th>
+                <th scope="col" className="px-3 py-3 font-semibold text-right">
+                  Reposos emitidos
+                </th>
+                <th scope="col" className="px-3 py-3 font-semibold text-right">
+                  Estado
+                </th>
+                <th scope="col" className="px-4 py-3 font-semibold text-left">
+                  Última actualización
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-outline-variant/40">
+              {reposos.map((r) => (
+                <tr key={r.id || r.persona} className="bg-white hover:bg-surface-container-low transition-colors">
+                  <td className="px-4 py-3 font-semibold text-on-surface">
+                    {r.persona || '—'}
+                  </td>
+                  <td className="px-3 py-3 text-on-surface-variant font-mono text-xs">
+                    {r.ente || '—'}
+                  </td>
+                  <td className="px-3 py-3 text-right font-mono font-bold text-primary">
+                    {numero(r.total || 0)}
+                  </td>
+                  <td className="px-3 py-3 text-right">
+                    <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                      r.estado === 'pendiente'
+                        ? 'bg-amber-soft text-amber'
+                        : r.estado === 'cotejado'
+                          ? 'bg-mint-soft text-mint'
+                          : 'bg-outline-variant text-on-surface-variant'
+                    }`}>
+                      {r.estado === 'pendiente' ? 'Pendiente' : r.estado === 'cotejado' ? 'Cotejado' : 'Sin estado'}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 font-mono text-[10px] text-on-surface-variant">
+                    {r.fecha || '—'}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </section>
+  );
+}
+
 function Panel({ sesion, onSalir }) {
   const { usuario } = sesion;
   const rol = ROLES[usuario.rol] || ROLES.director;
@@ -484,6 +615,8 @@ function Panel({ sesion, onSalir }) {
   const [centroId, setCentroId] = useState('general');
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState('');
+  const [repososLaborales, setRepososLaborales] = useState([]);
+  const [cargandoReposos, setCargandoReposos] = useState(false);
 
   const cargar = useCallback(async () => {
     setCargando(true);
@@ -502,9 +635,27 @@ function Panel({ sesion, onSalir }) {
     }
   }, [onSalir]);
 
+  const cargarReposos = useCallback(async () => {
+    setCargandoReposos(true);
+    try {
+      const respuesta = await API.repososLaborales();
+      setRepososLaborales(Array.isArray(respuesta) ? respuesta : []);
+    } catch {
+      setRepososLaborales([]);
+    } finally {
+      setCargandoReposos(false);
+    }
+  }, []);
+
   useEffect(() => {
     cargar();
   }, [cargar]);
+
+  useEffect(() => {
+    if (usuario.rol === 'admin_sistemas') {
+      cargarReposos();
+    }
+  }, [usuario.rol, cargarReposos]);
 
   const centros = datos?.por_centro || [];
   const centro =
@@ -879,6 +1030,14 @@ function Panel({ sesion, onSalir }) {
                     </li>
                   </ul>
                 </section>
+              )}
+              {usuario.rol === 'admin_sistemas' && (
+                <div className="lg:col-span-2">
+                  <PanelLaboral
+                    reposos={repososLaborales}
+                    cargando={cargandoReposos}
+                  />
+                </div>
               )}
             </div>
           </div>

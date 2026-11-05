@@ -217,6 +217,7 @@ export const API = {
   loginInstitucional: (username, password) =>
     apiFetch('/auth/institucional', { method: 'POST', body: { username, password } }),
   resumenPanel: () => apiFetch('/panel/resumen', { tipo: 'staff' }),
+  repososLaborales: () => apiFetch('/panel/reposos-laborales', { tipo: 'staff' }),
 };
 
 export function parseCedula(valor) {
