@@ -1863,7 +1863,7 @@ export default function Paciente() {
                 </div>
               )}
 
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <TextField
                   select
                   fullWidth
