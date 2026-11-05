@@ -371,6 +371,7 @@ function PanelStockInventario({ centros, centroId, totales }) {
   const centro =
     centroId === 'general' ? null : centros.find((c) => String(c.id) === centroId);
   const actual = centro || totales;
+  const nombreVista = centroId === 'general' ? 'Toda la red' : (centro?.nombre || '');
 
   return (
     <div className="space-y-5">
