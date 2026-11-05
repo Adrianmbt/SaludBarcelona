@@ -172,22 +172,11 @@ const ITEMS_SIDEBAR = [
 function SidebarDirector({ seccionActiva, setSeccionActiva, sidebarAbierta, setSidebarAbierta }) {
   return (
     <>
-      <button
-        type="button"
-        aria-label={sidebarAbierta ? 'Cerrar menú' : 'Abrir menú'}
-        aria-expanded={sidebarAbierta}
-        aria-controls="sidebar-director"
-        className="lg:hidden w-9 h-9 flex items-center justify-center rounded-lg hover:bg-secondary/10 transition-all text-primary"
-        onClick={() => setSidebarAbierta((v) => !v)}
-      >
-        <Icon name={sidebarAbierta ? 'close' : 'menu'} className="text-xl" />
-      </button>
-
       <aside
         id="sidebar-director"
-        className={`fixed inset-y-0 left-0 z-40 bg-surface border-r border-outline-variant flex flex-col w-64 shadow-xl transition-transform duration-300 ${
+        className={`fixed inset-y-0 left-0 z-50 bg-surface border-r border-outline-variant flex flex-col w-64 shadow-xl transition-transform duration-300 ${
           sidebarAbierta ? 'translate-x-0' : '-translate-x-full'
-        } lg:sticky lg:top-0 lg:translate-x-0 lg:self-start lg:h-screen lg:shadow-none lg:border lg:border-outline-variant/60 lg:rounded-2xl lg:w-56 lg:shrink-0`}
+        } lg:relative lg:top-0 lg:h-screen lg:shadow-none lg:border lg:border-outline-variant/60 lg:rounded-2xl lg:w-56 lg:shrink-0`}
         aria-label="Navegación del panel del director"
       >
         <div className="flex items-center justify-between px-5 py-4 border-b border-outline-variant bg-surface-container-low shrink-0">
@@ -200,7 +189,7 @@ function SidebarDirector({ seccionActiva, setSeccionActiva, sidebarAbierta, setS
           <button
             type="button"
             aria-label="Cerrar menú"
-            className="lg:hidden p-2 rounded-lg hover:bg-surface-container transition-colors"
+            className="p-2 rounded-lg hover:bg-surface-container transition-colors"
             onClick={() => setSidebarAbierta(false)}
           >
             <Icon name="close" className="text-lg" />
@@ -243,7 +232,7 @@ function SidebarDirector({ seccionActiva, setSeccionActiva, sidebarAbierta, setS
 
       {sidebarAbierta && (
         <div
-          className="fixed inset-0 z-30 bg-black/25 lg:hidden"
+          className="fixed inset-0 z-45 bg-black/25"
           onClick={() => setSidebarAbierta(false)}
           aria-hidden="true"
         />
@@ -874,6 +863,15 @@ function Panel({ sesion, onSalir }) {
           <div className="flex items-center gap-2">
             <button
               type="button"
+              aria-label={sidebarAbierta ? 'Cerrar menú' : 'Abrir menú'}
+              aria-expanded={sidebarAbierta}
+              className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-white/10 transition-all text-primary"
+              onClick={() => setSidebarAbierta((v) => !v)}
+            >
+              <Icon name={sidebarAbierta ? 'close' : 'menu'} className="text-xl" />
+            </button>
+            <button
+              type="button"
               onClick={cargar}
               disabled={cargando}
               className="inline-flex items-center gap-1.5 rounded-xl border border-white/15 bg-white/5 px-3 py-2 text-xs font-medium text-white/80 transition hover:bg-white/10 disabled:opacity-50"
@@ -968,7 +966,7 @@ function Panel({ sesion, onSalir }) {
               setSidebarAbierta={setSidebarAbierta}
             />
 
-            <div className="flex-1 min-w-0">
+            <div className={`flex-1 min-w-0 transition-all duration-300 ${sidebarAbierta ? 'lg:pl-[64px]' : 'lg:pl-0'}`}>
               <PillsFiltroCentro centros={centros} centroId={centroId} setCentroId={setCentroId} />
 
               <div className="space-y-5" aria-busy={cargando}>
