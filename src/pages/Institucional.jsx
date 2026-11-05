@@ -45,9 +45,9 @@ function fechaHora(valor) {
   return fecha.toLocaleString('es-VE', { dateStyle: 'medium', timeStyle: 'short' });
 }
 
-/* ════════════════════════════════════════════════════════════════
+/* ═════════════════════════════════════════════════════════════════
    Sesión
-   ════════════════════════════════════════════════════════════════ */
+   ═════════════════════════════════════════════════════════════════ */
 
 function useSesionInstitucional() {
   const [sesion, setSesion] = useState(() => leerSesionInstitucional());
@@ -65,9 +65,9 @@ function useSesionInstitucional() {
   return { sesion, entrar, salir };
 }
 
-/* ════════════════════════════════════════════════════════════════
+/* ═════════════════════════════════════════════════════════════════
    Piezas de interfaz
-   ════════════════════════════════════════════════════════════════ */
+   ═════════════════════════════════════════════════════════════════ */
 
 function Marca({ compacta = false }) {
   return (
@@ -159,9 +159,307 @@ function PanelBarras({ titulo, subtitulo, datos, color, vacio = 'Sin datos regis
   );
 }
 
-/* ════════════════════════════════════════════════════════════════
-   Login
+/* ═════════════════════════════════════════════════════════════════
+   Sidebar del director (colapsable, abre con botón)
    ════════════════════════════════════════════════════════════════ */
+
+const ITEMS_SIDEBAR = [
+  { id: 'atencion', etiqueta: 'Alcance y atención', icono: 'monitoring' },
+  { id: 'stock', etiqueta: 'Stock e inventario', icono: 'inventory_2' },
+  { id: 'laboral', etiqueta: 'Datos laborales', icono: 'work', nota: 'En construcción' },
+];
+
+function SidebarDirector({ seccionActiva, setSeccionActiva, sidebarAbierta, setSidebarAbierta }) {
+  return (
+    <>
+      <button
+        type="button"
+        aria-label={sidebarAbierta ? 'Cerrar menú' : 'Abrir menú'}
+        aria-expanded={sidebarAbierta}
+        aria-controls="sidebar-director"
+        className="lg:hidden w-9 h-9 flex items-center justify-center rounded-lg hover:bg-secondary/10 transition-all text-primary"
+        onClick={() => setSidebarAbierta((v) => !v)}
+      >
+        <Icon name={sidebarAbierta ? 'close' : 'menu'} className="text-xl" />
+      </button>
+
+      <aside
+        id="sidebar-director"
+        className={`fixed inset-y-0 left-0 z-40 bg-surface border-r border-outline-variant flex flex-col w-64 shadow-xl transition-transform duration-300 ${
+          sidebarAbierta ? 'translate-x-0' : '-translate-x-full'
+        } lg:translate-x-0 lg:relative lg:shadow-none lg:border-0 lg:w-auto`}
+        aria-label="Navegación del panel del director"
+      >
+        <div className="flex items-center justify-between px-5 py-4 border-b border-outline-variant bg-surface-container-low shrink-0">
+          <div className="flex items-center gap-2">
+            <span className="w-8 h-8 rounded-xl bg-secondary flex items-center justify-center text-white shrink-0">
+              <Icon name="dashboard" className="text-sm" />
+            </span>
+            <span className="font-display text-sm font-semibold text-primary leading-tight">Panel Director</span>
+          </div>
+          <button
+            type="button"
+            aria-label="Cerrar menú"
+            className="lg:hidden p-2 rounded-lg hover:bg-surface-container transition-colors"
+            onClick={() => setSidebarAbierta(false)}
+          >
+            <Icon name="close" className="text-lg" />
+          </button>
+        </div>
+
+        <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1" role="navigation">
+          {ITEMS_SIDEBAR.map((item) => {
+            const activado = seccionActiva === item.id;
+            return (
+              <button
+                key={item.id}
+                type="button"
+                aria-pressed={activado}
+                onClick={() => setSeccionActiva(item.id)}
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all ${
+                  activado
+                    ? 'bg-secondary text-white shadow-sm'
+                    : 'text-on-surface-variant hover:bg-surface-container hover:text-secondary'
+                }`}
+              >
+                <Icon name={item.icono} className={`text-lg ${activado ? 'text-white' : ''}`} />
+                <span className="font-semibold text-sm leading-tight">{item.etiqueta}</span>
+                {item.nota && (
+                  <span className="ml-auto text-[10px] font-medium text-on-surface-variant/60 uppercase tracking-wider">
+                    {item.nota}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </nav>
+
+        <div className="shrink-0 border-t border-outline-variant/40 px-5 py-4">
+          <p className="text-[10px] text-on-surface-variant/60 uppercase tracking-wider">
+            Instituto de Salud · BnaSalud
+          </p>
+        </div>
+      </aside>
+
+      {sidebarAbierta && (
+        <div
+          className="fixed inset-0 z-30 bg-black/25 lg:hidden"
+          onClick={() => setSidebarAbierta(false)}
+          aria-hidden="true"
+        />
+      )}
+    </>
+  );
+}
+
+/* ════════════════════════════════════════════════════════════════
+   Pills de filtro por centro
+   ═══════════════════════════════════════════════════════════════ */
+
+function PillsFiltroCentro({ centros, centroId, setCentroId }) {
+  return (
+    <nav aria-label="Filtrar por centro de salud" className="mb-5 flex gap-2 overflow-x-auto pb-1">
+      <button
+        type="button"
+        onClick={() => setCentroId('general')}
+        aria-pressed={centroId === 'general'}
+        className={`shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-semibold transition tab-interactive ${
+          centroId === 'general'
+            ? 'border-secondary bg-secondary text-white'
+            : 'border-outline-variant/70 bg-white text-on-surface-variant hover:border-secondary/50 hover:text-secondary'
+        }`}
+      >
+        Datos generales
+      </button>
+      {centros.map((c) => (
+        <button
+          key={c.id}
+          type="button"
+          onClick={() => setCentroId(String(c.id))}
+          aria-pressed={String(c.id) === centroId}
+          className={`shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-semibold transition tab-interactive ${
+            String(c.id) === centroId
+              ? 'border-secondary bg-secondary text-white'
+              : 'border-outline-variant/70 bg-white text-on-surface-variant hover:border-secondary/50 hover:text-secondary'
+          }`}
+        >
+          {c.nombre}
+        </button>
+      ))}
+    </nav>
+  );
+}
+
+/* ════════════════════════════════════════════════════════════════
+   Panel: Alcance y atención (KPIs + gráficas)
+   ═══════════════════════════════════════════════════════════════ */
+
+function PanelAlcanceAtencion({ actual, citasPorEstado, especialidades, cargos }) {
+  const kpis = [
+    {
+      icono: 'event_available',
+      etiqueta: 'Citas',
+      valor: numero(actual.citas),
+      detalle: `${numero(actual.citas_hoy)} para hoy · ${numero(actual.citas_pendientes)} pendientes`,
+      acento: 'text-secondary',
+    },
+    {
+      icono: 'clinical_notes',
+      etiqueta: 'Consultas',
+      valor: numero(actual.consultas),
+      detalle: 'Consultas registradas en el período',
+      acento: 'text-health-dark',
+    },
+    {
+      icono: 'groups',
+      etiqueta: 'Pacientes',
+      valor: numero(actual.pacientes),
+      detalle: 'Pacientes atendidos o citados',
+      acento: 'text-secondary',
+    },
+    {
+      icono: 'badge',
+      etiqueta: 'Personal',
+      valor: numero(actual.personal || actual.personal_activos),
+      detalle: `${numero(actual.personal_activos)} activos · ${numero(actual.medicos)} médicos`,
+      acento: 'text-health-dark',
+    },
+  ];
+
+  return (
+    <div className="space-y-5">
+      <section aria-label="Indicadores principales">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 xl:grid-cols-4">
+          {kpis.map((kpi) => (
+            <TarjetaKpi key={kpi.etiqueta} {...kpi} />
+          ))}
+        </div>
+      </section>
+
+      <div className="grid gap-4 lg:grid-cols-3">
+        <PanelBarras
+          titulo="Citas por estado"
+          subtitulo="Toda la red"
+          datos={citasPorEstado}
+          color="bg-secondary"
+          vacio="Todavía no hay citas registradas."
+        />
+        <PanelBarras
+          titulo="Especialidades con más citas"
+          subtitulo="Acumulado de la red"
+          datos={especialidades}
+          color="bg-health"
+          vacio="Todavía no hay especialidades con citas."
+        />
+        <PanelBarras
+          titulo="Personal por cargo"
+          subtitulo="Nómina registrada en la red"
+          datos={cargos}
+          color="bg-secondary-light"
+          vacio="Todavía no hay personal registrado."
+        />
+      </div>
+    </div>
+  );
+}
+
+/* ════════════════════════════════════════════════════════════════
+   Panel: Stock e inventario por centro
+   ═══════════════════════════════════════════════════════════════ */
+
+function PanelStockInventario({ centros, centroId, totales }) {
+  const centro =
+    centroId === 'general' ? null : centros.find((c) => String(c.id) === centroId);
+  const actual = centro || totales;
+
+  return (
+    <div className="space-y-5">
+      <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 className="font-display text-xl font-semibold text-primary sm:text-3xl">
+            {nombreVista}
+          </h2>
+          <p className="text-xs text-on-surface-variant">
+            {centro ? `Detalle del centro · ${centro.codigo || 'sin código'}` : 'Inventario consolidado de todos los centros'}
+          </p>
+        </div>
+        <span
+          className={`rounded-full px-2.5 py-1 text-[10px] font-semibold ${
+            actual.stock_agotados > 0 ? 'bg-blood-soft text-blood' : 'bg-mint-soft text-mint'
+          }`}
+        >
+          {actual.stock_agotados > 0 ? 'Requiere reposición' : 'Sin agotados'}
+        </span>
+      </div>
+
+      <TablaCentros
+        centros={centros}
+        seleccionado={centroId}
+        onSeleccionar={() => {}}
+        totales={totales}
+      />
+
+      <section className="rounded-2xl border border-outline-variant/60 bg-white p-4 shadow-sm">
+        <header className="mb-3 flex items-center justify-between gap-2">
+          <div>
+            <h3 className="font-display text-base font-semibold text-primary">Alertas de stock</h3>
+            <p className="text-[11px] text-on-surface-variant">{nombreVista}</p>
+          </div>
+          <span
+            className={`rounded-full px-2.5 py-1 text-[10px] font-semibold ${
+              actual.stock_agotados > 0 ? 'bg-blood-soft text-blood' : 'bg-mint-soft text-mint'
+            }`}
+          >
+            {actual.stock_agotados > 0 ? 'Requiere reposición' : 'Sin agotados'}
+          </span>
+        </header>
+        <dl className="grid grid-cols-3 gap-2 text-center">
+          <div className="rounded-xl bg-surface-container-low py-2.5">
+            <dt className="text-[10px] uppercase tracking-wide text-on-surface-variant">Agotados</dt>
+            <dd className="font-display text-xl font-semibold text-blood">{numero(actual.stock_agotados)}</dd>
+          </div>
+          <div className="rounded-xl bg-surface-container-low py-2.5">
+            <dt className="text-[10px] uppercase tracking-wide text-on-surface-variant">Stock bajo</dt>
+            <dd className="font-display text-xl font-semibold text-amber">{numero(actual.stock_bajos)}</dd>
+          </div>
+          <div className="rounded-xl bg-surface-container-low py-2.5">
+            <dt className="text-[10px] uppercase tracking-wide text-on-surface-variant">Unidades</dt>
+            <dd className="font-display text-xl font-semibold text-primary">{numero(actual.stock_unidades)}</dd>
+          </div>
+        </dl>
+        <p className="mt-3 text-[11px] leading-relaxed text-on-surface-variant">
+          Se considera stock bajo cuando un medicamento tiene 10 unidades o menos. Los datos provienen del inventario por clínica.
+        </p>
+      </section>
+    </div>
+  );
+}
+
+/* ════════════════════════════════════════════════════════════════
+   Panel: Datos laborales (en construcción)
+   ═══════════════════════════════════════════════════════════════ */
+
+function PanelLaboralEnConstruccion() {
+  return (
+    <div className="py-10">
+      <EstadoVacio
+        icono="construction"
+        titulo="Datos laborales en construcción"
+        clase="bg-surface-container-low rounded-3xl border border-outline-variant"
+      >
+        <p className="text-xs mt-1">
+          Los datos de reposos médicos emitidos a trabajadores estarán disponibles
+          una vez los doctores alcancen un consenso. Este módulo estará listo para
+          su cotejo con Recursos Humanos.
+        </p>
+      </EstadoVacio>
+    </div>
+  );
+}
+
+/* ═════════════════════════════════════════════════════════════════
+   Login
+   ═════════════════════════════════════════════════════════════════ */
 
 function AccesoInstitucional({ onEntrar }) {
   const [username, setUsername] = useState('');
@@ -354,9 +652,9 @@ function AccesoInstitucional({ onEntrar }) {
   );
 }
 
-/* ════════════════════════════════════════════════════════════════
-   Panel
-   ════════════════════════════════════════════════════════════════ */
+/* ═════════════════════════════════════════════════════════════════
+   Tabla de centros (compartida)
+   ═══════════════════════════════════════════════════════════════ */
 
 function TablaCentros({ centros, seleccionado, onSeleccionar, totales }) {
   return (
@@ -478,135 +776,9 @@ function TablaCentros({ centros, seleccionado, onSeleccionar, totales }) {
   );
 }
 
-/* ════════════════════════════════════════════════════════════════
-   Sección Laboral (solo admin_sistemas)
-   Reposos médicos emitidos a trabajadores, para cotejo con Recursos Humanos.
-   Muestra las personas con más reposos por instituto o ente.
+/* ═════════════════════════════════════════════════════════════════
+   Panel principal (rol director)
    ════════════════════════════════════════════════════════════════ */
-
-function PanelLaboral({ reposos = [], cargando }) {
-  if (cargando) {
-    return (
-      <section className="rounded-2xl border border-outline-variant/60 bg-white p-4 shadow-sm">
-        <header className="mb-3">
-          <h3 className="font-display text-base font-semibold text-primary">
-            Reposos médicos laborales
-          </h3>
-          <p className="text-[11px] text-on-surface-variant">
-            Cotejo de reposos emitidos a trabajadores con Recursos Humanos
-          </p>
-        </header>
-        <div className="space-y-3">
-          {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="rounded-xl border border-outline-variant/30 bg-white p-4">
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg skeleton" />
-                  <div className="space-y-2">
-                    <div className="h-3 w-32 skeleton rounded" />
-                    <div className="h-2 w-20 skeleton rounded" />
-                  </div>
-                </div>
-                <div className="h-3 w-24 skeleton rounded" />
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-    );
-  }
-
-  return (
-    <section className="rounded-2xl border border-outline-variant/60 bg-white p-4 shadow-sm">
-      <header className="mb-3 flex items-center justify-between gap-2">
-        <div>
-          <h3 className="font-display text-base font-semibold text-primary">
-            Reposos médicos laborales
-          </h3>
-          <p className="text-[11px] text-on-surface-variant">
-            Cotejo de reposos emitidos a trabajadores con Recursos Humanos
-          </p>
-        </div>
-        <span
-          className={`rounded-full px-2.5 py-1 text-[10px] font-semibold ${
-            reposos.length > 0 ? 'bg-amber-soft text-amber' : 'bg-mint-soft text-mint'
-          }`}
-        >
-          {reposos.length > 0 ? 'Registros disponibles' : 'Sin registros'}
-        </span>
-      </header>
-
-      {reposos.length === 0 ? (
-        <EstadoVacio
-          icono="work"
-          titulo="No hay reposos médicos registrados"
-          clase="py-10 text-on-surface-variant space-y-3 bg-surface-container-low rounded-3xl border border-outline-variant"
-        >
-          <p className="text-xs mt-1">
-            Los reposos médicos emitidos a trabajadores aparecerán aquí para su
-            cotejo con Recursos Humanos.
-          </p>
-        </EstadoVacio>
-      ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[640px] border-collapse text-left">
-            <caption className="sr-only">
-              Reposos médicos emitidos por persona, instituto o ente
-            </caption>
-            <thead>
-              <tr className="bg-surface-container-low text-[10px] uppercase tracking-wider text-on-surface-variant">
-                <th scope="col" className="px-4 py-3 font-semibold text-left">
-                  Persona trabajadora
-                </th>
-                <th scope="col" className="px-3 py-3 font-semibold text-left">
-                  Instituto / Ente
-                </th>
-                <th scope="col" className="px-3 py-3 font-semibold text-right">
-                  Reposos emitidos
-                </th>
-                <th scope="col" className="px-3 py-3 font-semibold text-right">
-                  Estado
-                </th>
-                <th scope="col" className="px-4 py-3 font-semibold text-left">
-                  Última actualización
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-outline-variant/40">
-              {reposos.map((r) => (
-                <tr key={r.id || r.persona} className="bg-white hover:bg-surface-container-low transition-colors">
-                  <td className="px-4 py-3 font-semibold text-on-surface">
-                    {r.persona || '—'}
-                  </td>
-                  <td className="px-3 py-3 text-on-surface-variant font-mono text-xs">
-                    {r.ente || '—'}
-                  </td>
-                  <td className="px-3 py-3 text-right font-mono font-bold text-primary">
-                    {numero(r.total || 0)}
-                  </td>
-                  <td className="px-3 py-3 text-right">
-                    <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold ${
-                      r.estado === 'pendiente'
-                        ? 'bg-amber-soft text-amber'
-                        : r.estado === 'cotejado'
-                          ? 'bg-mint-soft text-mint'
-                          : 'bg-outline-variant text-on-surface-variant'
-                    }`}>
-                      {r.estado === 'pendiente' ? 'Pendiente' : r.estado === 'cotejado' ? 'Cotejado' : 'Sin estado'}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 font-mono text-[10px] text-on-surface-variant">
-                    {r.fecha || '—'}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </section>
-  );
-}
 
 function Panel({ sesion, onSalir }) {
   const { usuario } = sesion;
@@ -615,8 +787,8 @@ function Panel({ sesion, onSalir }) {
   const [centroId, setCentroId] = useState('general');
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState('');
-  const [repososLaborales, setRepososLaborales] = useState([]);
-  const [cargandoReposos, setCargandoReposos] = useState(false);
+  const [seccionActiva, setSeccionActiva] = useState('atencion');
+  const [sidebarAbierta, setSidebarAbierta] = useState(false);
 
   const cargar = useCallback(async () => {
     setCargando(true);
@@ -635,37 +807,34 @@ function Panel({ sesion, onSalir }) {
     }
   }, [onSalir]);
 
-  const cargarReposos = useCallback(async () => {
-    setCargandoReposos(true);
-    try {
-      const respuesta = await API.repososLaborales();
-      setRepososLaborales(Array.isArray(respuesta) ? respuesta : []);
-    } catch {
-      setRepososLaborales([]);
-    } finally {
-      setCargandoReposos(false);
-    }
-  }, []);
-
   useEffect(() => {
     cargar();
   }, [cargar]);
 
-  useEffect(() => {
-    if (usuario.rol === 'admin_sistemas') {
-      cargarReposos();
-    }
-  }, [usuario.rol, cargarReposos]);
+  /* Placeholder temporal para admin_sistemas hasta su propio rediseño */
+  if (usuario.rol !== 'director') {
+    return (
+      <div className="min-h-screen bg-surface flex items-center justify-center">
+        <EstadoVacio
+          icono="dashboard"
+          titulo="Panel en rediseño"
+          clase="text-center"
+        >
+          <p className="text-xs mt-1">
+            Esta interfaz será rediseñada próximamente para el encargado de sistemas.
+          </p>
+        </EstadoVacio>
+      </div>
+    );
+  }
 
   const centros = datos?.por_centro || [];
+  const t = datos?.totales || {};
   const centro =
     centroId === 'general' ? null : centros.find((c) => String(c.id) === centroId);
-
-  const t = datos?.totales || {};
   const actual = centro || t;
-  const nombreVista = centro ? centro.nombre : 'Toda la red';
 
-  const citasPorEstado = (centro?.citas_por_estado || datos?.citas_por_estado || []).map((e) => ({
+  const citasPorEstado = (actual.citas_por_estado || datos?.citas_por_estado || []).map((e) => ({
     etiqueta: e.estado.charAt(0).toUpperCase() + e.estado.slice(1),
     total: e.total,
   }));
@@ -679,51 +848,6 @@ function Panel({ sesion, onSalir }) {
     etiqueta: c.nombre,
     total: c.total,
   }));
-
-  const kpis = [
-    {
-      icono: 'event_available',
-      etiqueta: 'Citas',
-      valor: numero(actual.citas),
-      detalle: `${numero(actual.citas_hoy)} para hoy · ${numero(actual.citas_pendientes)} pendientes`,
-      acento: 'text-secondary',
-    },
-    {
-      icono: 'clinical_notes',
-      etiqueta: 'Consultas',
-      valor: numero(actual.consultas),
-      detalle: 'Consultas registradas en el período',
-      acento: 'text-health-dark',
-    },
-    {
-      icono: 'groups',
-      etiqueta: 'Pacientes',
-      valor: numero(actual.pacientes),
-      detalle: 'Pacientes atendidos o citados',
-      acento: 'text-secondary',
-    },
-    {
-      icono: 'badge',
-      etiqueta: 'Personal',
-      valor: numero(actual.personal || actual.personal_activos),
-      detalle: `${numero(actual.personal_activos)} activos · ${numero(actual.medicos)} médicos`,
-      acento: 'text-health-dark',
-    },
-    {
-      icono: 'medication',
-      etiqueta: 'Recetas',
-      valor: numero(actual.recetas),
-      detalle: `${numero(actual.recetas_pendientes)} pendientes de despacho`,
-      acento: 'text-amber',
-    },
-    {
-      icono: 'inventory_2',
-      etiqueta: 'Stock',
-      valor: numero(actual.stock_unidades),
-      detalle: `${numero(actual.stock_agotados)} agotados · ${numero(actual.stock_bajos)} bajos`,
-      acento: 'text-blood',
-    },
-  ];
 
   return (
     <div className="min-h-screen bg-surface">
@@ -792,56 +916,6 @@ function Panel({ sesion, onSalir }) {
       </header>
 
       <main className="mx-auto max-w-7xl px-4 py-5 sm:px-6 sm:py-6">
-        <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h1 className="font-display text-2xl font-semibold text-primary sm:text-3xl">
-              {nombreVista}
-            </h1>
-            <p className="text-xs text-on-surface-variant">
-              {centro
-                ? `Detalle del centro · ${centro.codigo || 'sin código'}`
-                : 'Resumen consolidado de todos los centros de salud'}
-            </p>
-          </div>
-          <div className="flex items-center gap-2 rounded-xl border border-outline-variant/60 bg-white px-3 py-1.5 text-[11px] text-on-surface-variant shadow-sm">
-            <Icon name="verified" className="text-base text-health" />
-            Datos en la nube · Supabase
-          </div>
-        </div>
-
-        <nav
-          aria-label="Seleccionar centro de salud"
-          className="mb-5 flex gap-2 overflow-x-auto pb-1"
-        >
-          <button
-            type="button"
-            onClick={() => setCentroId('general')}
-            aria-pressed={centroId === 'general'}
-            className={`shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-semibold transition tab-interactive ${
-              centroId === 'general'
-                ? 'border-secondary bg-secondary text-white'
-                : 'border-outline-variant/70 bg-white text-on-surface-variant hover:border-secondary/50 hover:text-secondary'
-            }`}
-          >
-            General
-          </button>
-          {centros.map((c) => (
-            <button
-              key={c.id}
-              type="button"
-              onClick={() => setCentroId(String(c.id))}
-              aria-pressed={String(c.id) === centroId}
-              className={`shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-semibold transition tab-interactive ${
-                String(c.id) === centroId
-                  ? 'border-secondary bg-secondary text-white'
-                  : 'border-outline-variant/70 bg-white text-on-surface-variant hover:border-secondary/50 hover:text-secondary'
-              }`}
-            >
-              {c.nombre}
-            </button>
-          ))}
-        </nav>
-
         {error && (
           <div
             role="alert"
@@ -885,162 +959,33 @@ function Panel({ sesion, onSalir }) {
             </div>
           </div>
         ) : datos ? (
-          <div className="space-y-5" aria-busy={cargando}>
-            <section aria-label="Indicadores principales">
-              <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 xl:grid-cols-6">
-                {kpis.map((kpi) => (
-                  <TarjetaKpi key={kpi.etiqueta} {...kpi} />
-                ))}
-              </div>
-            </section>
-
-            <div className="grid gap-4 lg:grid-cols-3">
-              <PanelBarras
-                titulo="Citas por estado"
-                subtitulo={centro ? centro.nombre : 'Toda la red'}
-                datos={citasPorEstado}
-                color="bg-secondary"
-                vacio="Todavía no hay citas registradas."
-              />
-              <PanelBarras
-                titulo="Especialidades con más citas"
-                subtitulo="Acumulado de la red"
-                datos={especialidades}
-                color="bg-health"
-                vacio="Todavía no hay especialidades con citas."
-              />
-              <PanelBarras
-                titulo="Personal por cargo"
-                subtitulo="Nómina registrada en la red"
-                datos={cargos}
-                color="bg-secondary-light"
-                vacio="Todavía no hay personal registrado."
-              />
-            </div>
-
-            <TablaCentros
-              centros={centros}
-              seleccionado={centroId}
-              onSeleccionar={setCentroId}
-              totales={t}
+          <>
+            <SidebarDirector
+              seccionActiva={seccionActiva}
+              setSeccionActiva={setSeccionActiva}
+              sidebarAbierta={sidebarAbierta}
+              setSidebarAbierta={setSidebarAbierta}
             />
 
-            <div className="grid gap-4 lg:grid-cols-2">
-              <section className="rounded-2xl border border-outline-variant/60 bg-white p-4 shadow-sm">
-                <header className="mb-3 flex items-center justify-between gap-2">
-                  <div>
-                    <h3 className="font-display text-base font-semibold text-primary">
-                      Alertas de stock
-                    </h3>
-                    <p className="text-[11px] text-on-surface-variant">
-                      {centro ? centro.nombre : 'Toda la red'}
-                    </p>
-                  </div>
-                  <span
-                    className={`rounded-full px-2.5 py-1 text-[10px] font-semibold ${
-                      actual.stock_agotados > 0
-                        ? 'bg-blood-soft text-blood'
-                        : 'bg-mint-soft text-mint'
-                    }`}
-                  >
-                    {actual.stock_agotados > 0 ? 'Requiere reposición' : 'Sin agotados'}
-                  </span>
-                </header>
-                <dl className="grid grid-cols-3 gap-2 text-center">
-                  <div className="rounded-xl bg-surface-container-low py-2.5">
-                    <dt className="text-[10px] uppercase tracking-wide text-on-surface-variant">
-                      Agotados
-                    </dt>
-                    <dd className="font-display text-xl font-semibold text-blood">
-                      {numero(actual.stock_agotados)}
-                    </dd>
-                  </div>
-                  <div className="rounded-xl bg-surface-container-low py-2.5">
-                    <dt className="text-[10px] uppercase tracking-wide text-on-surface-variant">
-                      Stock bajo
-                    </dt>
-                    <dd className="font-display text-xl font-semibold text-amber">
-                      {numero(actual.stock_bajos)}
-                    </dd>
-                  </div>
-                  <div className="rounded-xl bg-surface-container-low py-2.5">
-                    <dt className="text-[10px] uppercase tracking-wide text-on-surface-variant">
-                      Unidades
-                    </dt>
-                    <dd className="font-display text-xl font-semibold text-primary">
-                      {numero(actual.stock_unidades)}
-                    </dd>
-                  </div>
-                </dl>
-                <p className="mt-3 text-[11px] leading-relaxed text-on-surface-variant">
-                  Se considera stock bajo cuando un medicamento tiene 10 unidades o menos.
-                  Los datos provienen del inventario por clínica.
-                </p>
-              </section>
+            <div className="lg:pl-64 transition-all duration-300">
+              <PillsFiltroCentro centros={centros} centroId={centroId} setCentroId={setCentroId} />
 
-              {usuario.rol === 'admin_sistemas' ? (
-                <section className="rounded-2xl border border-outline-variant/60 bg-white p-4 shadow-sm">
-                  <header className="mb-3">
-                    <h3 className="font-display text-base font-semibold text-primary">
-                      Usuarios y accesos
-                    </h3>
-                    <p className="text-[11px] text-on-surface-variant">
-                      Cuentas registradas en la plataforma
-                    </p>
-                  </header>
-                  <ul className="divide-y divide-outline-variant/40">
-                    {(datos.usuarios_por_rol || []).map((fila) => (
-                      <li
-                        key={fila.rol}
-                        className="flex items-center justify-between gap-2 py-2 text-xs"
-                      >
-                        <span className="font-medium capitalize text-on-surface">
-                          {fila.rol.replace(/_/g, ' ')}
-                        </span>
-                        <span className="font-mono text-on-surface-variant">
-                          {numero(fila.activos)} activos / {numero(fila.total)}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                </section>
-              ) : (
-                <section className="rounded-2xl border border-outline-variant/60 bg-white p-4 shadow-sm">
-                  <header className="mb-3">
-                    <h3 className="font-display text-base font-semibold text-primary">
-                      Alcance de la cuenta
-                    </h3>
-                    <p className="text-[11px] text-on-surface-variant">
-                      Dirección del Instituto de Salud
-                    </p>
-                  </header>
-                  <p className="text-sm leading-relaxed text-on-surface">{rol.descripcion}</p>
-                  <ul className="mt-3 space-y-2 text-xs text-on-surface-variant">
-                    <li className="flex items-start gap-2">
-                      <Icon name="check_circle" className="mt-0.5 text-base text-health" />
-                      Lectura de indicadores de los {numero(t.centros)} centros.
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <Icon name="check_circle" className="mt-0.5 text-base text-health" />
-                      Comparación de citas, consultas, pacientes y personal.
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <Icon name="check_circle" className="mt-0.5 text-base text-health" />
-                      Seguimiento de recetas pendientes y stock crítico.
-                    </li>
-                  </ul>
-                </section>
-              )}
-              {usuario.rol === 'admin_sistemas' && (
-                <div className="lg:col-span-2">
-                  <PanelLaboral
-                    reposos={repososLaborales}
-                    cargando={cargandoReposos}
+              <div className="space-y-5" aria-busy={cargando}>
+                {seccionActiva === 'laboral' ? (
+                  <PanelLaboralEnConstruccion />
+                ) : seccionActiva === 'stock' ? (
+                  <PanelStockInventario centros={centros} centroId={centroId} totales={t} />
+                ) : (
+                  <PanelAlcanceAtencion
+                    actual={actual}
+                    citasPorEstado={citasPorEstado}
+                    especialidades={especialidades}
+                    cargos={cargos}
                   />
-                </div>
-              )}
+                )}
+              </div>
             </div>
-          </div>
+          </>
         ) : null}
 
         <p className="mt-8 text-center text-[11px] text-on-surface-variant">
@@ -1052,7 +997,7 @@ function Panel({ sesion, onSalir }) {
   );
 }
 
-/* ════════════════════════════════════════════════════════════════
+/* ═════════════════════════════════════════════════════════════════
    Página
    ════════════════════════════════════════════════════════════════ */
 
