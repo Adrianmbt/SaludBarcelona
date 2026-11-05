@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Icon from '../components/Icon';
 import { EsqueletoKpi, EsqueletoPanelBarras, EsqueletoTablaCentros } from '../components/Skeletons';
@@ -187,7 +187,7 @@ function SidebarDirector({ seccionActiva, setSeccionActiva, sidebarAbierta, setS
         id="sidebar-director"
         className={`fixed inset-y-0 left-0 z-40 bg-surface border-r border-outline-variant flex flex-col w-64 shadow-xl transition-transform duration-300 ${
           sidebarAbierta ? 'translate-x-0' : '-translate-x-full'
-        } lg:translate-x-0 lg:relative lg:shadow-none lg:border-0 lg:w-auto`}
+        } lg:sticky lg:top-0 lg:translate-x-0 lg:self-start lg:h-screen lg:shadow-none lg:border lg:border-outline-variant/60 lg:rounded-2xl lg:w-56 lg:shrink-0`}
         aria-label="Navegación del panel del director"
       >
         <div className="flex items-center justify-between px-5 py-4 border-b border-outline-variant bg-surface-container-low shrink-0">
@@ -258,7 +258,7 @@ function SidebarDirector({ seccionActiva, setSeccionActiva, sidebarAbierta, setS
 
 function PillsFiltroCentro({ centros, centroId, setCentroId }) {
   return (
-    <nav aria-label="Filtrar por centro de salud" className="mb-5 flex gap-2 overflow-x-auto pb-1">
+    <nav aria-label="Filtrar por centro de salud" className="mb-5 flex gap-2 overflow-x-auto pb-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
       <button
         type="button"
         onClick={() => setCentroId('general')}
@@ -960,7 +960,7 @@ function Panel({ sesion, onSalir }) {
             </div>
           </div>
         ) : datos ? (
-          <>
+          <div className="flex gap-0 lg:gap-6 items-start">
             <SidebarDirector
               seccionActiva={seccionActiva}
               setSeccionActiva={setSeccionActiva}
@@ -968,7 +968,7 @@ function Panel({ sesion, onSalir }) {
               setSidebarAbierta={setSidebarAbierta}
             />
 
-            <div className="lg:pl-64 transition-all duration-300">
+            <div className="flex-1 min-w-0">
               <PillsFiltroCentro centros={centros} centroId={centroId} setCentroId={setCentroId} />
 
               <div className="space-y-5" aria-busy={cargando}>
@@ -986,7 +986,7 @@ function Panel({ sesion, onSalir }) {
                 )}
               </div>
             </div>
-          </>
+          </div>
         ) : null}
 
         <p className="mt-8 text-center text-[11px] text-on-surface-variant">
