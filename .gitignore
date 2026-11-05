@@ -24,6 +24,10 @@ maquetas/
 # Carpetas sueltas de imágenes provisionales
 Nueva carpeta/
 
+# Volcados de base de datos (contienen datos sensibles)
+dump-*.sql
+*.dump
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

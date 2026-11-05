@@ -6,6 +6,7 @@ const API_BASE = `${API_ORIGIN}/api/v1`;
 export const CLAVES_SESION = {
   staff: 'bna_token',
   paciente: 'bna_token_paciente',
+  institucional: 'bna_usuario_institucional',
 };
 
 // Cuál de las dos sesiones entró en último lugar. `tokenActivo` usa este
@@ -55,6 +56,7 @@ export function cerrarSesion(tipo) {
   try {
     if (tipo === 'staff' || !tipo) {
       localStorage.removeItem(CLAVES_SESION.staff);
+      localStorage.removeItem(CLAVES_SESION.institucional);
       if (localStorage.getItem(CLAVE_ULTIMA_SESION) === 'staff') {
         localStorage.removeItem(CLAVE_ULTIMA_SESION);
       }
@@ -68,6 +70,39 @@ export function cerrarSesion(tipo) {
   } catch {
     /* sin almacenamiento disponible */
   }
+}
+
+/* === Sesión institucional (admin_sistemas / director) ===
+   El token se guarda en la clave staff para que `apiFetch({ tipo: 'staff' })`
+   lo use sin duplicar la lógica de autorización. El usuario se guarda aparte
+   para restaurar la sesión al recargar el panel. */
+export function guardarSesionInstitucional(token, usuario) {
+  try {
+    localStorage.setItem(CLAVES_SESION.staff, token);
+    localStorage.setItem(CLAVES_SESION.institucional, JSON.stringify(usuario || {}));
+    marcarUltimaSesion('staff');
+  } catch {
+    /* sin almacenamiento disponible */
+  }
+}
+
+export function leerSesionInstitucional() {
+  try {
+    const token = localStorage.getItem(CLAVES_SESION.staff) || '';
+    const bruto = localStorage.getItem(CLAVES_SESION.institucional);
+    const usuario = bruto ? JSON.parse(bruto) : null;
+    const ROLES_GLOBALES = ['admin_sistemas', 'director'];
+    if (!token || !usuario || !ROLES_GLOBALES.includes(usuario.rol)) {
+      return null;
+    }
+    return { token, usuario };
+  } catch {
+    return null;
+  }
+}
+
+export function cerrarSesionInstitucional() {
+  cerrarSesion('staff');
 }
 
 async function apiFetch(endpoint, options = {}) {
@@ -177,6 +212,11 @@ export const API = {
     apiFetch('/auth/paciente/recuperar', { method: 'POST', body: { cedula, email } }),
   resetPin: (cedula, codigo, password) =>
     apiFetch('/auth/paciente/reset', { method: 'POST', body: { cedula, codigo, password } }),
+
+  /* === Panel institucional (admin_sistemas / director) === */
+  loginInstitucional: (username, password) =>
+    apiFetch('/auth/institucional', { method: 'POST', body: { username, password } }),
+  resumenPanel: () => apiFetch('/panel/resumen', { tipo: 'staff' }),
 };
 
 export function parseCedula(valor) {

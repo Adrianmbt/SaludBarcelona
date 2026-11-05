@@ -1,4 +1,5 @@
 import Icon from './Icon';
+import { Link } from 'react-router-dom';
 
 const ENLACES = [
   { href: '#inicio', etiqueta: 'Inicio' },
@@ -90,8 +91,15 @@ export default function Footer() {
         </div>
 
         <div className="relative border-t border-white/10">
-          <div className="max-w-7xl mx-auto px-6 py-5 text-center">
-            <p className="text-xs text-white/50">&copy; 2026 Instituto de Salud del Municipio Simón Bolívar - Alcaldía de Barcelona. Todos los derechos reservados.</p>
+          <div className="max-w-7xl mx-auto px-6 py-5 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <p className="text-xs text-white/50 text-center sm:text-left">&copy; 2026 Instituto de Salud del Municipio Simón Bolívar - Alcaldía de Barcelona. Todos los derechos reservados.</p>
+            <Link
+              to="/institucional"
+              className="inline-flex items-center gap-1.5 text-xs text-white/50 hover:text-secondary-container transition-colors"
+            >
+              <Icon name="lock" className="text-sm" />
+              Acceso institucional
+            </Link>
           </div>
         </div>
       </div>
