@@ -174,12 +174,12 @@ function SidebarDirector({ seccionActiva, setSeccionActiva, sidebarAbierta, setS
     <>
       <aside
         id="sidebar-director"
-        className={`fixed inset-y-0 left-0 z-50 bg-surface border-r border-outline-variant flex flex-col w-64 shadow-xl transition-transform duration-300 ${
-          sidebarAbierta ? 'translate-x-0' : '-translate-x-full'
-        } lg:relative lg:top-0 lg:h-screen lg:shadow-none lg:border lg:border-outline-variant/60 lg:rounded-2xl lg:w-56 lg:shrink-0`}
+        className={`fixed inset-y-0 left-0 z-50 bg-white border-r border-outline-variant flex flex-col w-64 shadow-xl transition-transform duration-300 ${
+          sidebarAbierta ? 'translate-x-0' : '-translate-x-full pointer-events-none'
+        } lg:pointer-events-auto lg:translate-x-0 lg:static lg:z-auto lg:h-auto lg:self-start lg:shadow-none lg:border lg:border-outline-variant/60 lg:rounded-2xl lg:w-60 lg:shrink-0`}
         aria-label="Navegación del panel del director"
       >
-        <div className="flex items-center justify-between px-5 py-4 border-b border-outline-variant bg-surface-container-low shrink-0">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-outline-variant bg-surface-container-low shrink-0 lg:rounded-t-2xl">
           <div className="flex items-center gap-2">
             <span className="w-8 h-8 rounded-xl bg-secondary flex items-center justify-center text-white shrink-0">
               <Icon name="dashboard" className="text-sm" />
@@ -189,7 +189,7 @@ function SidebarDirector({ seccionActiva, setSeccionActiva, sidebarAbierta, setS
           <button
             type="button"
             aria-label="Cerrar menú"
-            className="p-2 rounded-lg hover:bg-surface-container transition-colors"
+            className="p-2 rounded-lg hover:bg-surface-container transition-colors lg:hidden"
             onClick={() => setSidebarAbierta(false)}
           >
             <Icon name="close" className="text-lg" />
@@ -204,8 +204,11 @@ function SidebarDirector({ seccionActiva, setSeccionActiva, sidebarAbierta, setS
                 key={item.id}
                 type="button"
                 aria-pressed={activado}
-                onClick={() => setSeccionActiva(item.id)}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all ${
+                onClick={() => {
+                  setSeccionActiva(item.id);
+                  setSidebarAbierta(false);
+                }}
+                className={`flex w-full items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all ${
                   activado
                     ? 'bg-secondary text-white shadow-sm'
                     : 'text-on-surface-variant hover:bg-surface-container hover:text-secondary'
@@ -214,7 +217,11 @@ function SidebarDirector({ seccionActiva, setSeccionActiva, sidebarAbierta, setS
                 <Icon name={item.icono} className={`text-lg ${activado ? 'text-white' : ''}`} />
                 <span className="font-semibold text-sm leading-tight">{item.etiqueta}</span>
                 {item.nota && (
-                  <span className="ml-auto text-[10px] font-medium text-on-surface-variant/60 uppercase tracking-wider">
+                  <span
+                    className={`ml-auto text-[10px] font-medium uppercase tracking-wider ${
+                      activado ? 'text-white/80' : 'text-on-surface-variant/60'
+                    }`}
+                  >
                     {item.nota}
                   </span>
                 )}
@@ -232,7 +239,7 @@ function SidebarDirector({ seccionActiva, setSeccionActiva, sidebarAbierta, setS
 
       {sidebarAbierta && (
         <div
-          className="fixed inset-0 z-45 bg-black/25"
+          className="fixed inset-0 z-40 bg-black/40 lg:hidden"
           onClick={() => setSidebarAbierta(false)}
           aria-hidden="true"
         />
@@ -851,7 +858,16 @@ function Panel({ sesion, onSalir }) {
           }}
         />
         <div className="relative mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-4 py-4 sm:px-6">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3 sm:gap-4">
+            <button
+              type="button"
+              aria-label={sidebarAbierta ? 'Cerrar menú' : 'Abrir menú'}
+              aria-expanded={sidebarAbierta}
+              className="lg:hidden flex h-9 w-9 items-center justify-center rounded-lg text-white hover:bg-white/10 transition-colors"
+              onClick={() => setSidebarAbierta((v) => !v)}
+            >
+              <Icon name={sidebarAbierta ? 'close' : 'menu'} className="text-xl" />
+            </button>
             <Marca compacta />
             <span className="hidden h-8 w-px bg-white/15 sm:block" aria-hidden="true" />
             <span className="hidden items-center gap-1.5 rounded-full border border-health-light/30 bg-health/15 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-health-light sm:inline-flex">
@@ -861,15 +877,6 @@ function Panel({ sesion, onSalir }) {
           </div>
 
           <div className="flex items-center gap-2">
-            <button
-              type="button"
-              aria-label={sidebarAbierta ? 'Cerrar menú' : 'Abrir menú'}
-              aria-expanded={sidebarAbierta}
-              className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-white/10 transition-all text-primary"
-              onClick={() => setSidebarAbierta((v) => !v)}
-            >
-              <Icon name={sidebarAbierta ? 'close' : 'menu'} className="text-xl" />
-            </button>
             <button
               type="button"
               onClick={cargar}
@@ -958,7 +965,7 @@ function Panel({ sesion, onSalir }) {
             </div>
           </div>
         ) : datos ? (
-          <div className="flex gap-0 lg:gap-6 items-start">
+          <div className="flex flex-col lg:flex-row gap-6 items-start">
             <SidebarDirector
               seccionActiva={seccionActiva}
               setSeccionActiva={setSeccionActiva}
@@ -966,7 +973,7 @@ function Panel({ sesion, onSalir }) {
               setSidebarAbierta={setSidebarAbierta}
             />
 
-            <div className={`flex-1 min-w-0 transition-all duration-300 ${sidebarAbierta ? 'lg:pl-[64px]' : 'lg:pl-0'}`}>
+            <div className="flex-1 min-w-0 w-full">
               <PillsFiltroCentro centros={centros} centroId={centroId} setCentroId={setCentroId} />
 
               <div className="space-y-5" aria-busy={cargando}>
