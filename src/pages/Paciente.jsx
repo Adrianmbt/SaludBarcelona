@@ -77,29 +77,24 @@ function iniciales(nombre = '') {
 }
 
 function formatoFecha(iso) {
-  try {
-    return new Date(iso).toLocaleDateString('es-VE', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-    });
-  } catch {
-    return iso || '';
-  }
+  const d = new Date(iso);
+  if (!iso || Number.isNaN(d.getTime())) return 'Por asignar';
+  return d.toLocaleDateString('es-VE', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  });
 }
 
 function formatoFechaLarga(iso) {
-  try {
-    const d = new Date(`${String(iso).slice(0, 10)}T00:00:00`);
-    return d.toLocaleDateString('es-VE', {
-      weekday: 'long',
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
-    });
-  } catch {
-    return iso || '';
-  }
+  const d = new Date(`${String(iso).slice(0, 10)}T00:00:00`);
+  if (!iso || Number.isNaN(d.getTime())) return 'Por asignar';
+  return d.toLocaleDateString('es-VE', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  });
 }
 
 function horaCorta(h) {
@@ -126,12 +121,6 @@ const ESTADOS_CITA = {
   completada: { tono: 'success', etiqueta: 'Completada' },
   finalizada: { tono: 'success', etiqueta: 'Finalizada' },
   cancelada: { tono: 'error', etiqueta: 'Cancelada' },
-};
-
-const ESTADOS_ORDEN = {
-  solicitada: { tono: 'amber', etiqueta: 'Solicitada' },
-  con_resultados: { tono: 'success', etiqueta: 'Con resultados' },
-  en_proceso: { tono: 'info', etiqueta: 'En proceso' },
 };
 
 const ESTADOS_NOTIFICACION = {
@@ -195,7 +184,6 @@ export default function Paciente() {
   const [paciente, setPaciente] = useState(null);
   const [historial, setHistorial] = useState(null);
   const [citas, setCitas] = useState([]);
-  const [ordenes, setOrdenes] = useState([]);
   const [notificaciones, setNotificaciones] = useState([]);
   const [cargando, setCargando] = useState(false);
   const [avisoError, setAvisoError] = useState('');
@@ -223,54 +211,11 @@ export default function Paciente() {
   const [motivoPosponer, setMotivoPosponer] = useState('');
   const [posponiendo, setPosponiendo] = useState(false);
   const [posponerError, setPosponerError] = useState('');
-  const [slotsPosponer, setSlotsPosponer] = useState([]);
-  const [consultandoSlotsPosponer, setConsultandoSlotsPosponer] = useState(false);
-  const [slotMsgPosponer, setSlotMsgPosponer] = useState('');
 
   const [citaACancelar, setCitaACancelar] = useState(null);
   const [cancelando, setCancelando] = useState(false);
   const [cancelarError, setCancelarError] = useState('');
   const [motivoCancelar, setMotivoCancelar] = useState('');
-
-  useEffect(() => {
-    if (!citaAPosponer || !nuevaFechaPosponer) {
-      setSlotsPosponer([]);
-      setSlotMsgPosponer('');
-      return;
-    }
-    let activo = true;
-    setConsultandoSlotsPosponer(true);
-    setNuevaHoraPosponer('');
-    setSlotMsgPosponer('');
-    API.getDisponibilidad({
-      centro_id: citaAPosponer.centro_id || 2,
-      especialidad_id: citaAPosponer.especialidad_id,
-      medico_id: citaAPosponer.medico_id,
-      fecha: nuevaFechaPosponer,
-    })
-      .then((data) => {
-        if (!activo) return;
-        if (data.slots && data.slots.length > 0) {
-          setSlotsPosponer(data.slots);
-          setSlotMsgPosponer('');
-        } else {
-          setSlotsPosponer([]);
-          setSlotMsgPosponer(data.mensaje || 'No hay horarios disponibles para esta fecha con este médico.');
-        }
-      })
-      .catch(() => {
-        if (activo) {
-          setSlotsPosponer([]);
-          setSlotMsgPosponer('Error al consultar horarios disponibles.');
-        }
-      })
-      .finally(() => {
-        if (activo) setConsultandoSlotsPosponer(false);
-      });
-    return () => {
-      activo = false;
-    };
-  }, [citaAPosponer, nuevaFechaPosponer]);
 
   async function handlePosponerSubmit(e) {
     e.preventDefault();
@@ -485,7 +430,7 @@ export default function Paciente() {
       setCitas((prev) => [nueva, ...prev]);
       setSolicitudAbierta(false);
       setAviso(
-        'Solicitud enviada. La recepción del centro te confirmar¡ la fecha y la hora.',
+        'Solicitud enviada. La recepción del centro te confirmará la fecha y la hora.',
       );
     } catch (err) {
       setSolicitudError(err.message || 'No se pudo enviar la solicitud.');
@@ -573,7 +518,7 @@ export default function Paciente() {
     setInfoEntrada('');
     const ident = parseCedula(registroForm.cedula);
     if (!ident.cedula || ident.cedula.length < 5) {
-      setErrorEntrada('Ingrese una cédula v¡lida.');
+      setErrorEntrada('Ingrese una cédula válida.');
       return;
     }
     if (registroForm.nombre_completo.trim().length < 3) {
@@ -682,15 +627,13 @@ export default function Paciente() {
       return [
         API.historialPaciente(cedula).catch(sinDatos),
         API.citasPaciente(cedula).catch(sinLista),
-        API.ordenesPaciente(paciente.id).catch(sinLista),
         API.notificacionesPaciente(cedula).catch(sinLista),
       ];
     })();
     try {
-      const [h, c, o, , , n] = await Promise.all(promesas);
+      const [h, c, n] = await Promise.all(promesas);
       setHistorial(h && h.historial ? h : null);
       setCitas(Array.isArray(c) ? c : []);
-      setOrdenes(Array.isArray(o) ? o : []);
       setNotificaciones(Array.isArray(n) ? n : []);
     } catch (err) {
       if (err && err.status === 401) {
@@ -699,7 +642,6 @@ export default function Paciente() {
       } else {
         setHistorial(null);
         setCitas([]);
-        setOrdenes([]);
         setNotificaciones([]);
       }
     } finally {
@@ -733,7 +675,7 @@ export default function Paciente() {
     parroquia: 'El Carmen',
     direccion: 'Av. Caracas, Sector Tronconal III, Barcelona',
     horario: 'Lunes a Viernes 7:00 AM - 5:30 PM',
-    servicios: ['Consulta Especializada', 'Laboratorio', 'Im¡genes', 'Farmacia'],
+    servicios: ['Consulta Especializada', 'Laboratorio', 'Imágenes', 'Farmacia'],
     logo: '/identidad visual/InstitutoSalud.jpeg',
   };
 
@@ -1255,7 +1197,7 @@ export default function Paciente() {
                           <p className="text-sm font-bold text-primary">Crear mi cuenta</p>
                         </div>
                         <p className="text-xs text-on-surface-variant -mt-2">
-                          Registra tus datos una sola vez. Podr¡s reservar y consultar tus citas.
+                          Registra tus datos una sola vez. Podrás reservar y consultar tus citas.
                         </p>
                         <div className="grid grid-cols-[92px_1fr] gap-3">
                           <TextField
@@ -1386,7 +1328,7 @@ export default function Paciente() {
                           }
                           sx={accessFieldSx}
                           slotProps={{ htmlInput: { autoComplete: 'new-password' } }}
-                          helperText="La usar¡s junto a tu cédula para entrar al portal."
+                          helperText="La usarás junto a tu cédula para entrar al portal."
                         />
                         <label className="flex items-start gap-2 text-[11px] text-on-surface-variant">
                           <input
@@ -1666,7 +1608,7 @@ export default function Paciente() {
                               </p>
                               <p className="font-mono text-[11px] font-bold text-secondary">
                                 {c.estado === 'pendiente'
-                                  ? 'Recepción asignar¡ la hora'
+                                  ? 'Recepción asignará la hora'
                                   : horaCorta(c.hora_inicio)}
                               </p>
                             </div>
@@ -1699,7 +1641,7 @@ export default function Paciente() {
                                 sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600, color: 'var(--color-error)' }}
                                 className="btn-hover-effect"
                               >
-                                Cancelar cita
+                                {c.estado === 'pendiente' ? 'Cancelar solicitud' : 'Cancelar cita'}
                               </Button>
                             )}
                             {c.estado === 'confirmada' && (
@@ -1825,7 +1767,7 @@ export default function Paciente() {
         </main>
       </div>
 
-      {/* Di¡logo: solicitud de cita (centro + especialidad) */}
+      {/* Diálogo: solicitud de cita (centro + especialidad) */}
       <Dialog
         open={solicitudAbierta}
         onClose={() => !enviandoSolicitud && setSolicitudAbierta(false)}
@@ -1950,7 +1892,7 @@ export default function Paciente() {
         </form>
       </Dialog>
 
-      {/* Di¡logo: detalle de consulta / comprobante */}
+      {/* Diálogo: detalle de consulta / comprobante */}
       <Dialog open={!!recetaAbierta} onClose={() => setRecetaAbierta(null)} maxWidth="sm" fullWidth>
         {recetaAbierta && (
           <>
@@ -2076,7 +2018,7 @@ export default function Paciente() {
                   </p>
                   <p className="text-[11px] font-semibold text-secondary mt-0.5">
                     <Icon name="stethoscope" className="text-[11px] mr-1 align-[-1px]" />
-                    {citaAPosponer.medico_nombre || 'Asignación autom¡tica de médico'}
+                    {citaAPosponer.medico_nombre || 'Asignación automática de médico'}
                   </p>
                 </div>
               </div>
@@ -2092,9 +2034,9 @@ export default function Paciente() {
               )}
               {citaAPosponer.medico_nombre && (
                 <Alert severity="info" variant="outlined" sx={{ fontSize: '0.8rem' }}>
-                  Solo se muestran los horarios de consulta de{' '}
-                  <strong>{citaAPosponer.medico_nombre}</strong>. Podr¡s posponer solo dentro de su
-                  disponibilidad.
+                  Solo puedes posponer dentro del horario de consulta de{' '}
+                  <strong>{citaAPosponer.medico_nombre}</strong>. Si la hora no está
+                  disponible, el sistema te lo indicará.
                 </Alert>
               )}
               <div>
@@ -2115,39 +2057,20 @@ export default function Paciente() {
               {nuevaFechaPosponer && (
                 <div>
                   <label className="block text-xs font-bold text-on-surface-variant mb-1">
-                    Horario Disponible del Médico
+                    Nueva Hora Solicitada
                   </label>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {consultandoSlotsPosponer && (
-                      <span className="text-xs text-secondary animate-pulse flex items-center gap-1 py-1">
-                        <Icon name="sync" className="text-sm animate-spin" /> Verificando disponibilidad del médico...
-                      </span>
-                    )}
-                    {!consultandoSlotsPosponer && slotsPosponer.length === 0 && (
-                      <span className="text-xs italic text-error font-medium py-1">
-                        {slotMsgPosponer || 'Seleccione una fecha para consultar horarios.'}
-                      </span>
-                    )}
-                    {!consultandoSlotsPosponer &&
-                      slotsPosponer.map((slot) => {
-                        const slotFinal = slot.length === 5 ? `${slot}:00` : slot;
-                        const activo = nuevaHoraPosponer === slotFinal;
-                        return (
-                          <button
-                            key={slot}
-                            type="button"
-                            onClick={() => setNuevaHoraPosponer(slotFinal)}
-                            className={`px-3 py-1.5 rounded-lg border text-xs font-semibold transition-all ${
-                              activo
-                                ? 'bg-secondary text-white border-secondary shadow-md scale-105'
-                                : 'border-outline-variant text-primary hover:border-secondary hover:bg-secondary/5'
-                            }`}
-                          >
-                            {slot}
-                          </button>
-                        );
-                      })}
-                  </div>
+                  <TextField
+                    type="time"
+                    fullWidth
+                    size="small"
+                    value={nuevaHoraPosponer}
+                    onChange={(e) => setNuevaHoraPosponer(e.target.value)}
+                    required
+                    sx={fieldSx}
+                  />
+                  <p className="text-[11px] text-on-surface-variant mt-1">
+                    El sistema verificará que esté dentro del horario de consulta del médico.
+                  </p>
                 </div>
               )}
               <div>
@@ -2212,9 +2135,19 @@ export default function Paciente() {
                 </Alert>
               )}
               <Alert severity="warning" variant="outlined" sx={{ fontSize: '0.82rem' }}>
-                Esta acción no se puede deshacer. Se cancelar¡ tu cita del{' '}
-                <strong>{formatoFechaLarga(citaACancelar.fecha_cita)}</strong> a las{' '}
-                <strong>{horaCorta(citaACancelar.hora_inicio)}</strong> y tu cupo se liberar¡.
+                Esta acción no se puede deshacer.{' '}
+                {citaACancelar.fecha_cita ? (
+                  <>
+                    Se cancelará tu cita del{' '}
+                    <strong>{formatoFechaLarga(citaACancelar.fecha_cita)}</strong> a las{' '}
+                    <strong>{horaCorta(citaACancelar.hora_inicio)}</strong> y tu cupo se liberará.
+                  </>
+                ) : (
+                  <>
+                    Se cancelará tu solicitud, que sigue en espera de que recepción le asigne
+                    fecha y hora.
+                  </>
+                )}
               </Alert>
               <div>
                 <label className="block text-xs font-bold text-on-surface-variant mb-1">

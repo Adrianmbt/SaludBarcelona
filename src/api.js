@@ -149,41 +149,20 @@ export const API = {
   getCentros: () => apiFetch('/centros'),
   getEspecialidades: (centroId) =>
     apiFetch(centroId ? `/especialidades?centro_id=${centroId}` : '/especialidades'),
-  getDisponibilidad: (params) => {
-    const qs = new URLSearchParams(
-      Object.entries(params).filter(([, v]) => v !== '' && v != null),
-    ).toString();
-    return apiFetch(`/citas/disponibilidad?${qs}`);
-  },
-  getMedicosPorEspecialidad: (centroId, especialidadId) =>
-    apiFetch(`/citas/medicos?centro_id=${centroId}&especialidad_id=${especialidadId}`),
-  crearCita: (payload) => apiFetch('/citas', { method: 'POST', body: payload }),
 
   /* === Citas y Agenda (Público / Paciente) === */
   posponerCita: (citaId, payload) =>
     apiFetch(`/citas/${citaId}/posponer`, { method: 'PATCH', body: payload }),
   cancelarCita: (citaId, payload) =>
     apiFetch(`/citas/${citaId}/cancelar`, { method: 'PATCH', body: payload }),
-  buscarCita: (codigo) =>
-    apiFetch(`/citas/${encodeURIComponent(codigo)}`),
 
   /* === Portal del Paciente === */
   buscarPaciente: (cedula) =>
     apiFetch(`/pacientes/${encodeURIComponent(cedula)}`, { tipo: 'paciente' }),
-  actualizarPaciente: (cedula, payload) =>
-    apiFetch(`/pacientes/${encodeURIComponent(cedula)}`, { method: 'PATCH', body: payload, tipo: 'paciente' }),
   historialPaciente: (cedula) =>
     apiFetch(`/pacientes/${encodeURIComponent(cedula)}/historial`, { tipo: 'paciente' }),
-  medicoTratante: (cedula) =>
-    apiFetch(`/pacientes/${encodeURIComponent(cedula)}/medico`, { tipo: 'paciente' }),
   citasPaciente: (cedula) =>
     apiFetch(`/citas?cedula=${encodeURIComponent(cedula)}`, { tipo: 'paciente' }),
-  ordenesPaciente: (pacienteId) =>
-    apiFetch(`/estudios/ordenes/paciente/${encodeURIComponent(pacienteId)}`, { tipo: 'paciente' }),
-  recetasPaciente: (cedula) =>
-    apiFetch(`/farmacia/recetas/paciente/${encodeURIComponent(cedula)}`, { tipo: 'paciente' }),
-  recibirReceta: (recetaId) =>
-    apiFetch(`/farmacia/recetas/${recetaId}/recibir`, { method: 'POST', tipo: 'paciente' }),
   notificacionesPaciente: (cedula) =>
     apiFetch(`/pacientes/${encodeURIComponent(cedula)}/notificaciones`, { tipo: 'paciente' }),
 
@@ -196,18 +175,9 @@ export const API = {
     apiFetch(`/pacientes/empleado/${encodeURIComponent(cedula)}`),
 
   /* === Citas del paciente autenticado === */
-  misCitas: () => apiFetch('/citas/mis-citas', { tipo: 'paciente' }),
   solicitarCita: (payload) =>
     apiFetch('/citas/solicitar', { method: 'POST', body: payload, tipo: 'paciente' }),
 
-  /* === Recepción (uso interno, requiere token de personal) === */
-  listarSolicitudes: (centroId) =>
-    apiFetch(
-      centroId ? `/citas/solicitudes?centro_id=${centroId}` : '/citas/solicitudes',
-      { tipo: 'staff' },
-    ),
-  asignarCita: (citaId, payload) =>
-    apiFetch(`/citas/${citaId}/asignar`, { method: 'PATCH', body: payload, tipo: 'staff' }),
   recuperarContrasena: (cedula, email) =>
     apiFetch('/auth/paciente/recuperar', { method: 'POST', body: { cedula, email } }),
   restablecerContrasena: (cedula, codigo, password) =>
@@ -217,7 +187,24 @@ export const API = {
   loginInstitucional: (username, password) =>
     apiFetch('/auth/institucional', { method: 'POST', body: { username, password } }),
   resumenPanel: () => apiFetch('/panel/resumen', { tipo: 'staff' }),
-  repososLaborales: () => apiFetch('/panel/reposos-laborales', { tipo: 'staff' }),
+
+  /* === Soporte técnico (admin_sistemas) === */
+  estadoSoporte: () => apiFetch('/soporte/estado', { tipo: 'staff' }),
+  logsSoporte: ({ origen = 'todo', texto = '', limite = 100 } = {}) => {
+    const qs = new URLSearchParams({ origen, texto, limite: String(limite) }).toString();
+    return apiFetch(`/soporte/logs?${qs}`, { tipo: 'staff' });
+  },
+  nominaInterna: (texto = '') =>
+    apiFetch(`/soporte/nomina?texto=${encodeURIComponent(texto)}`, { tipo: 'staff' }),
+  usuariosInternos: (texto = '') =>
+    apiFetch(`/soporte/usuarios-internos?texto=${encodeURIComponent(texto)}`, { tipo: 'staff' }),
+
+  /* === Cuentas globales (solo admin_sistemas / director) === */
+  listarUsuarios: () => apiFetch('/usuarios', { tipo: 'staff' }),
+  crearUsuario: (payload) =>
+    apiFetch('/usuarios', { method: 'POST', body: payload, tipo: 'staff' }),
+  actualizarUsuario: (id, payload) =>
+    apiFetch(`/usuarios/${encodeURIComponent(id)}`, { method: 'PATCH', body: payload, tipo: 'staff' }),
 };
 
 export function parseCedula(valor) {

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import Icon from '../components/Icon';
 import { EsqueletoKpi, EsqueletoPanelBarras, EsqueletoTablaCentros } from '../components/Skeletons';
 import { EstadoVacio } from '../components/Estado';
+import { PanelSoporte } from './Soporte';
 import {
   API,
   guardarSesionInstitucional,
@@ -480,8 +481,8 @@ function AccesoInstitucional({ onEntrar }) {
   }
 
   return (
-    <main className="min-h-screen bg-primary lg:grid lg:grid-cols-[1.05fr_1fr]">
-      <section className="relative flex flex-col justify-between overflow-hidden px-6 py-8 lg:px-12 lg:py-12">
+    <main className="flex min-h-screen flex-col bg-primary lg:grid lg:grid-cols-[1.05fr_1fr]">
+      <section className="relative order-2 flex flex-col justify-between overflow-hidden px-6 py-8 lg:order-none lg:px-12 lg:py-12">
         <div
           className="pointer-events-none absolute inset-0"
           aria-hidden="true"
@@ -526,7 +527,7 @@ function AccesoInstitucional({ onEntrar }) {
         </p>
       </section>
 
-      <section className="flex items-center justify-center bg-surface px-5 py-10 sm:px-8">
+      <section className="order-1 flex items-center justify-center bg-surface px-5 py-10 sm:px-8 lg:order-none">
         <div className="w-full max-w-md">
           <div className="rounded-3xl border border-outline-variant/60 bg-white p-6 shadow-xl shadow-primary/10 sm:p-8">
             <div className="mb-6 flex items-center gap-3">
@@ -808,23 +809,6 @@ function Panel({ sesion, onSalir }) {
     cargar();
   }, [cargar]);
 
-  /* Placeholder temporal para admin_sistemas hasta su propio rediseño */
-  if (usuario.rol !== 'director') {
-    return (
-      <div className="min-h-screen bg-surface flex items-center justify-center">
-        <EstadoVacio
-          icono="dashboard"
-          titulo="Panel en rediseño"
-          clase="text-center"
-        >
-          <p className="text-xs mt-1">
-            Esta interfaz será rediseñada próximamente para el encargado de sistemas.
-          </p>
-        </EstadoVacio>
-      </div>
-    );
-  }
-
   const centros = datos?.por_centro || [];
   const t = datos?.totales || {};
   const centro =
@@ -1009,16 +993,22 @@ function Panel({ sesion, onSalir }) {
 
 export default function Institucional() {
   const { sesion, entrar, salir } = useSesionInstitucional();
+  const esSoporte = sesion?.usuario?.rol === 'admin_sistemas';
 
   useEffect(() => {
-    document.title = sesion
-      ? 'Panel Institucional · Salud Barcelona'
-      : 'Acceso institucional · Salud Barcelona';
+    if (!sesion) {
+      document.title = 'Acceso institucional · Salud Barcelona';
+    } else {
+      document.title = esSoporte
+        ? 'Soporte técnico · Salud Barcelona'
+        : 'Panel Institucional · Salud Barcelona';
+    }
     return () => {
       document.title = 'Salud Barcelona - Instituto de Salud Municipal';
     };
-  }, [sesion]);
+  }, [sesion, esSoporte]);
 
   if (!sesion) return <AccesoInstitucional onEntrar={entrar} />;
+  if (esSoporte) return <PanelSoporte sesion={sesion} onSalir={salir} />;
   return <Panel sesion={sesion} onSalir={salir} />;
 }
