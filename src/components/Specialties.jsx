@@ -374,7 +374,7 @@ export default function Specialties() {
                     </p>
                   </div>
 
-                  <div className="flex flex-wrap items-center gap-1.5">
+                  <div className="flex w-full flex-wrap items-center gap-1.5 sm:w-auto sm:justify-end">
                     {centroActual.tipo && (
                       <span className="inline-flex items-center gap-1 rounded-full border border-outline-variant/60 bg-white/70 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.1em] text-on-surface-variant">
                         <Icon
