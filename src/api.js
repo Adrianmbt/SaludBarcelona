@@ -188,6 +188,25 @@ export const API = {
     apiFetch('/auth/institucional', { method: 'POST', body: { username, password } }),
   resumenPanel: () => apiFetch('/panel/resumen', { tipo: 'staff' }),
 
+  /* === Stock e inventario (panel del Director) === */
+  almacenStock: (centroId) =>
+    apiFetch(`/almacen/stock${centroId ? `?centro_id=${centroId}` : ''}`, { tipo: 'staff' }),
+  almacenOrdenes: (centroId) =>
+    apiFetch(`/almacen/ordenes${centroId ? `?centro_id=${centroId}` : ''}`, { tipo: 'staff' }),
+  almacenMovimientos: (centroId) =>
+    apiFetch(`/almacen/movimientos${centroId ? `?centro_id=${centroId}` : ''}`, { tipo: 'staff' }),
+  catalogoInsumos: ({ q = '', categoria = '', activo = true, limite = 30 } = {}) => {
+    const params = new URLSearchParams({ limite: String(limite) });
+    if (q) params.set('q', q);
+    if (categoria) params.set('categoria', categoria);
+    if (activo !== null) params.set('activo', String(activo));
+    return apiFetch(`/catalogo?${params}`, { tipo: 'staff' });
+  },
+  crearInsumoCatalogo: (payload) =>
+    apiFetch('/catalogo', { method: 'POST', body: payload, tipo: 'staff' }),
+  crearOrdenEntrega: (payload) =>
+    apiFetch('/ordenes-entrega', { method: 'POST', body: payload, tipo: 'staff' }),
+
   /* === Soporte técnico (admin_sistemas) === */
   estadoSoporte: () => apiFetch('/soporte/estado', { tipo: 'staff' }),
   logsSoporte: ({ origen = 'todo', texto = '', limite = 100 } = {}) => {
