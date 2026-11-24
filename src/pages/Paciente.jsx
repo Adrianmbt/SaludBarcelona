@@ -138,7 +138,7 @@ const TIPOS_NOTIFICACION = {
 };
 
 function EtiquetaEstado({ estado, mapa }) {
-  const conf = (mapa || ESTADOS_CITA)[estado] || { tono: 'info', etiqueta: estado || 'â€”' };
+  const conf = (mapa || ESTADOS_CITA)[estado] || { tono: 'info', etiqueta: estado || '—' };
   const colorMap = {
     amber: 'var(--color-amber)',
     success: 'var(--color-success)',
@@ -853,7 +853,7 @@ export default function Paciente() {
             <div>
               <p className="text-sm font-bold text-primary">Notificaciones</p>
               <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-on-surface-variant">
-                Ãšltimas {Math.min(notificaciones.length, 5)}
+                Últimas {Math.min(notificaciones.length, 5)}
               </p>
             </div>
             <button
@@ -944,7 +944,7 @@ export default function Paciente() {
                 <div className="w-full max-w-sm">
                   <EsqueletoPagina avatar lineas={4} />
                   <p className="mt-6 text-center text-sm text-on-surface-variant">
-                    Verificando tus datosâ€¦
+                    Verificando tus datos…
                   </p>
                 </div>
               ) : (
@@ -1945,7 +1945,7 @@ export default function Paciente() {
                             </p>
                             {(i.cantidad || i.unidad) && (
                               <p className="text-xs text-on-surface-variant">
-                                Cantidad: {i.cantidad || 'â€”'}
+                                Cantidad: {i.cantidad || '—'}
                                 {i.unidad ? ` ${i.unidad}` : ''}
                               </p>
                             )}
@@ -1983,7 +1983,7 @@ export default function Paciente() {
                 )}
                 <div className="pt-3 flex items-center justify-between border-t border-dashed border-ink-line-strong">
                   <span className="font-mono text-[10px] text-on-surface-variant">Comprobante</span>
-                  <span className="font-mono text-xs font-bold text-primary">{recetaAbierta.comprobante_ref || 'â€”'}</span>
+                  <span className="font-mono text-xs font-bold text-primary">{recetaAbierta.comprobante_ref || '—'}</span>
                 </div>
               </div>
             </DialogContent>
@@ -2004,7 +2004,7 @@ export default function Paciente() {
         )}
       </Dialog>
 
-      {/* ====== DIÃLOGO POSPONER CITA ====== */}
+      {/* ====== DIÁLOGO POSPONER CITA ====== */}
       <Dialog open={!!citaAPosponer} onClose={() => setCitaAPosponer(null)} maxWidth="xs" fullWidth>
         {citaAPosponer && (
           <form onSubmit={handlePosponerSubmit}>
@@ -2110,7 +2110,7 @@ export default function Paciente() {
         )}
       </Dialog>
 
-      {/* ====== DIÃLOGO CANCELAR CITA ====== */}
+      {/* ====== DIÁLOGO CANCELAR CITA ====== */}
       <Dialog open={!!citaACancelar} onClose={() => setCitaACancelar(null)} maxWidth="xs" fullWidth>
         {citaACancelar && (
           <form onSubmit={handleCancelarCita}>
