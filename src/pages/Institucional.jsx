@@ -18,7 +18,8 @@ const ROLES = {
     descripcion: 'Acceso total al panel y a los indicadores de la red.',
   },
   director: {
-    etiqueta: 'Director del Instituto',
+    etiqueta: 'Administración Ejecutiva',
+    insignia: 'Administración General',
     icono: 'shield_person',
     descripcion: 'Indicadores globales de todos los centros de salud.',
   },
@@ -94,67 +95,345 @@ function Marca({ compacta = false }) {
   );
 }
 
-function TarjetaKpi({ icono, etiqueta, valor, detalle, acento = 'text-secondary' }) {
+/* ── Paleta de datos: solo tokens institucionales ya definidos ── */
+const COLOR_ESTADO = {
+  confirmada: 'var(--color-secondary)',
+  pendiente: 'var(--color-amber)',
+  completada: 'var(--color-health)',
+  finalizada: 'var(--color-health)',
+  en_consulta: 'var(--color-secondary-light)',
+  cancelada: 'var(--color-blood)',
+  no_asistio: 'var(--color-outline)',
+};
+
+const ETIQUETA_ESTADO = {
+  pendiente: 'Pendiente',
+  confirmada: 'Confirmada',
+  cancelada: 'Cancelada',
+  completada: 'Completada',
+  finalizada: 'Finalizada',
+  en_consulta: 'En consulta',
+  no_asistio: 'No asistió',
+  sin_estado: 'Sin estado',
+};
+
+const COLORES_CARGO = [
+  'var(--color-secondary)',
+  'var(--color-health)',
+  'var(--color-secondary-light)',
+  'var(--color-amber)',
+  'var(--color-mint)',
+  'var(--color-outline)',
+  'var(--color-primary-light)',
+  'var(--color-secondary-container)',
+];
+
+function sinTildes(texto) {
+  return String(texto ?? '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase();
+}
+
+function porcentaje(parte, total) {
+  return total > 0 ? Math.round((parte / total) * 100) : 0;
+}
+
+/* Los cargos llegan con etiquetas libres ("Médico Integral", "Médico Especialista"…).
+   Se agrupan los que son médicos para que el total coincida con el KPI de Personal. */
+function agruparCargos(filas) {
+  const mapa = new Map();
+  for (const fila of filas) {
+    const esMedico = sinTildes(fila.nombre).includes('medic');
+    const etiqueta = esMedico ? 'Médicos' : String(fila.nombre || 'Sin dato');
+    const previo = mapa.get(etiqueta);
+    mapa.set(etiqueta, {
+      etiqueta,
+      esMedico,
+      total: (previo?.total || 0) + (Number(fila.total) || 0),
+    });
+  }
+  const orden = [...mapa.values()].sort((a, b) => b.total - a.total);
+  if (orden.length <= 8) return orden;
+  const resto = orden.slice(7).reduce((suma, c) => suma + c.total, 0);
+  return [...orden.slice(0, 7), { etiqueta: 'Otros cargos', esMedico: false, total: resto }];
+}
+
+function TarjetaKpi({ icono, etiqueta, valor, detalle }) {
   return (
-    <div className="group relative overflow-hidden rounded-2xl border border-outline-variant/60 bg-white p-4 shadow-sm card-hover-effect">
-      <span
-        className="absolute inset-x-0 top-0 h-[3px] bg-gradient-to-r from-secondary via-health to-secondary-container opacity-70"
-        aria-hidden="true"
-      />
-      <div className="flex items-start justify-between gap-2">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-on-surface-variant">
-          {etiqueta}
+    <div className="flex items-center gap-3 rounded-2xl border border-outline-variant/60 bg-white px-3 py-2.5 shadow-sm">
+      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-surface-container-low text-secondary">
+        <Icon name={icono} className="text-xl" />
+      </span>
+      <div className="min-w-0 flex-1">
+        <div className="flex items-baseline justify-between gap-2">
+          <p className="font-display text-2xl font-semibold leading-none text-primary">{valor}</p>
+          <p className="truncate text-[11px] font-semibold text-on-surface-variant">{etiqueta}</p>
+        </div>
+        <p className="mt-1 truncate text-[10px] text-on-surface-variant" title={detalle}>
+          {detalle}
         </p>
-        <Icon name={icono} className={`text-lg ${acento}`} />
       </div>
-      <p className="mt-2 font-display text-3xl font-semibold leading-none text-primary">
-        {valor}
-      </p>
-      <p className="mt-1.5 text-[11px] text-on-surface-variant">{detalle}</p>
     </div>
   );
 }
 
-function Barra({ etiqueta, valor, maximo, color = 'bg-secondary' }) {
-  const porcentaje = maximo > 0 ? Math.max((valor / maximo) * 100, 2) : 0;
+function DonaEstados({ datos, alcance, vacio }) {
+  const [resaltado, setResaltado] = useState(null);
+  const total = datos.reduce((suma, d) => suma + d.total, 0);
+  const radio = 42;
+  const circunferencia = 2 * Math.PI * radio;
+  let acumulado = 0;
+
   return (
-    <li className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1">
-      <span className="truncate text-xs text-on-surface" title={etiqueta}>
-        {etiqueta}
-      </span>
-      <span className="font-mono text-xs font-semibold text-on-surface">{numero(valor)}</span>
-      <span className="col-span-2 h-1.5 overflow-hidden rounded-full bg-surface-container">
-        <span
-          className={`block h-full rounded-full ${color}`}
-          style={{ width: `${porcentaje}%` }}
-        />
-      </span>
-    </li>
+    <section className="h-full rounded-2xl border border-outline-variant/60 bg-white p-4 shadow-sm">
+      <header className="mb-3">
+        <h3 className="font-display text-base font-semibold text-primary">Citas por estado</h3>
+        <p className="text-[11px] text-on-surface-variant">
+          {alcance} · {numero(total)} citas
+        </p>
+      </header>
+      {datos.length ? (
+        <div className="flex flex-col items-center gap-4 xl:flex-row">
+          <div className="relative h-32 w-32 shrink-0">
+            <svg
+              viewBox="0 0 100 100"
+              className="h-full w-full"
+              role="img"
+              aria-label={`Distribución de ${numero(total)} citas por estado`}
+            >
+              <g transform="rotate(-90 50 50)">
+                <circle cx="50" cy="50" r={radio} fill="none" strokeWidth="11" stroke="var(--color-surface-container)" />
+                {datos.map((d) => {
+                  const largo = total > 0 ? (d.total / total) * circunferencia : 0;
+                  const activo = resaltado === d.etiqueta;
+                  const segmento = (
+                    <circle
+                      key={d.etiqueta}
+                      cx="50"
+                      cy="50"
+                      r={radio}
+                      fill="none"
+                      stroke={d.color}
+                      strokeWidth={activo ? 14 : 11}
+                      strokeDasharray={`${largo} ${circunferencia - largo}`}
+                      strokeDashoffset={-acumulado}
+                      opacity={resaltado && !activo ? 0.35 : 1}
+                      className="transition-all duration-200"
+                    >
+                      <title>{`${d.etiqueta}: ${numero(d.total)} citas`}</title>
+                    </circle>
+                  );
+                  acumulado += largo;
+                  return segmento;
+                })}
+              </g>
+            </svg>
+            <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+              <span className="font-display text-2xl font-semibold leading-none text-primary">{numero(total)}</span>
+              <span className="mt-1 text-[10px] text-on-surface-variant">citas</span>
+            </div>
+          </div>
+
+          <ul className="w-full min-w-0 flex-1 space-y-1">
+            {datos.map((d) => (
+              <li key={d.etiqueta}>
+                <button
+                  type="button"
+                  onMouseEnter={() => setResaltado(d.etiqueta)}
+                  onMouseLeave={() => setResaltado(null)}
+                  onFocus={() => setResaltado(d.etiqueta)}
+                  onBlur={() => setResaltado(null)}
+                  aria-label={`${d.etiqueta}: ${numero(d.total)} citas, ${porcentaje(d.total, total)}%`}
+                  className={`flex w-full items-center gap-2 rounded-lg px-1.5 py-1 text-left transition-colors ${
+                    resaltado === d.etiqueta ? 'bg-surface-container-low' : ''
+                  }`}
+                >
+                  <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: d.color }} />
+                  <span className="min-w-0 flex-1 truncate text-[11px] text-on-surface">{d.etiqueta}</span>
+                  <span className="font-mono text-[11px] font-semibold text-on-surface">{numero(d.total)}</span>
+                  <span className="w-8 text-right text-[10px] text-on-surface-variant">
+                    {porcentaje(d.total, total)}%
+                  </span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : (
+        <p className="py-8 text-center text-xs text-on-surface-variant">{vacio}</p>
+      )}
+    </section>
   );
 }
 
-function PanelBarras({ titulo, subtitulo, datos, color, vacio = 'Sin datos registrados.' }) {
+function BarrasEspecialidades({ datos, vacio }) {
   const maximo = Math.max(...datos.map((d) => d.total), 0);
+
   return (
-    <section className="rounded-2xl border border-outline-variant/60 bg-white p-4 shadow-sm">
-      <header className="mb-3">
-        <h3 className="font-display text-base font-semibold text-primary">{titulo}</h3>
-        {subtitulo && <p className="text-[11px] text-on-surface-variant">{subtitulo}</p>}
+    <section className="h-full rounded-2xl border border-outline-variant/60 bg-white p-4 shadow-sm">
+      <header className="mb-3 flex items-start justify-between gap-2">
+        <div>
+          <h3 className="font-display text-base font-semibold text-primary">Especialidades con más citas</h3>
+          <p className="text-[11px] text-on-surface-variant">Acumulado de la red</p>
+        </div>
+        <span className="shrink-0 rounded-full bg-surface-container-low px-2 py-0.5 font-mono text-[10px] text-on-surface-variant">
+          máx. {numero(maximo)}
+        </span>
       </header>
       {datos.length ? (
-        <ul className="space-y-2.5">
+        <ul className="space-y-2">
           {datos.map((d) => (
-            <Barra
+            <li
               key={d.etiqueta}
-              etiqueta={d.etiqueta}
-              valor={d.total}
-              maximo={maximo}
-              color={color}
-            />
+              title={`${d.etiqueta}: ${numero(d.total)} citas`}
+              className="grid grid-cols-[minmax(0,7.5rem)_minmax(0,1fr)_2.25rem] items-center gap-2"
+            >
+              <span className="truncate text-[11px] text-on-surface">{d.etiqueta}</span>
+              <span className="h-2.5 overflow-hidden rounded-full bg-surface-container">
+                <span
+                  className="block h-full rounded-full"
+                  style={{
+                    width: `${maximo > 0 ? Math.max((d.total / maximo) * 100, 2) : 0}%`,
+                    background: 'var(--color-health)',
+                  }}
+                />
+              </span>
+              <span className="text-right font-mono text-[11px] font-semibold text-on-surface">
+                {numero(d.total)}
+              </span>
+            </li>
           ))}
         </ul>
       ) : (
-        <p className="py-6 text-center text-xs text-on-surface-variant">{vacio}</p>
+        <p className="py-8 text-center text-xs text-on-surface-variant">{vacio}</p>
+      )}
+    </section>
+  );
+}
+
+function DesglosePersonal({ datos, registrados, medicos, vacio }) {
+  const total = datos.reduce((suma, d) => suma + d.total, 0);
+
+  return (
+    <section className="rounded-2xl border border-outline-variant/60 bg-white p-4 shadow-sm">
+      <header className="mb-3">
+        <h3 className="font-display text-base font-semibold text-primary">Personal por cargo</h3>
+        <p className="text-[11px] text-on-surface-variant">
+          Toda la red · {numero(registrados)} registrados · {numero(medicos)} médicos
+        </p>
+      </header>
+      {datos.length ? (
+        <>
+          <div
+            className="flex h-3 overflow-hidden rounded-full bg-surface-container"
+            role="img"
+            aria-label={`Personal por cargo: ${datos
+              .map((d) => `${d.etiqueta} ${porcentaje(d.total, total)}%`)
+              .join(', ')}`}
+          >
+            {datos.map((d, indice) => (
+              <span
+                key={d.etiqueta}
+                className="h-full"
+                style={{
+                  width: `${(d.total / total) * 100}%`,
+                  background: COLORES_CARGO[indice % COLORES_CARGO.length],
+                }}
+                title={`${d.etiqueta}: ${numero(d.total)} (${porcentaje(d.total, total)}%)`}
+              />
+            ))}
+          </div>
+          <ul className="mt-3 grid gap-x-6 gap-y-1.5 sm:grid-cols-2">
+            {datos.map((d, indice) => (
+              <li key={d.etiqueta} className="flex items-center gap-2 text-[11px]">
+                <span
+                  className="h-2 w-2 shrink-0 rounded-full"
+                  style={{ background: COLORES_CARGO[indice % COLORES_CARGO.length] }}
+                />
+                <span className="min-w-0 flex-1 truncate text-on-surface" title={d.etiqueta}>
+                  {d.etiqueta}
+                </span>
+                <span className="font-mono font-semibold text-on-surface">{numero(d.total)}</span>
+                <span className="w-8 text-right text-on-surface-variant">
+                  {porcentaje(d.total, total)}%
+                </span>
+              </li>
+            ))}
+          </ul>
+        </>
+      ) : (
+        <p className="py-8 text-center text-xs text-on-surface-variant">{vacio}</p>
+      )}
+    </section>
+  );
+}
+
+function ComparativaCentros({ centros }) {
+  const orden = [...centros].sort((a, b) => (b.citas + b.consultas) - (a.citas + a.consultas));
+  const maximo = Math.max(...orden.map((c) => Math.max(c.citas, c.consultas)), 0);
+
+  return (
+    <section className="rounded-2xl border border-outline-variant/60 bg-white p-4 shadow-sm">
+      <header className="mb-3 flex flex-wrap items-end justify-between gap-2">
+        <div>
+          <h3 className="font-display text-base font-semibold text-primary">Demanda por centro de salud</h3>
+          <p className="text-[11px] text-on-surface-variant">
+            Citas y consultas acumuladas · ordenado por demanda
+          </p>
+        </div>
+        <div className="flex items-center gap-3 text-[10px] text-on-surface-variant">
+          <span className="inline-flex items-center gap-1.5">
+            <span className="h-2 w-2 rounded-full" style={{ background: 'var(--color-secondary)' }} />
+            Citas
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <span className="h-2 w-2 rounded-full" style={{ background: 'var(--color-health)' }} />
+            Consultas
+          </span>
+        </div>
+      </header>
+
+      {orden.length ? (
+        <ul className="divide-y divide-outline-variant/40">
+          {orden.map((c) => (
+            <li
+              key={c.id}
+              className="grid grid-cols-[minmax(0,8rem)_minmax(0,1fr)] items-center gap-3 py-2 sm:grid-cols-[minmax(0,13rem)_minmax(0,1fr)]"
+              title={`${c.nombre}: ${numero(c.citas)} citas, ${numero(c.consultas)} consultas`}
+            >
+              <div className="min-w-0">
+                <p className="truncate text-xs font-semibold text-on-surface">{c.nombre}</p>
+                <p className="font-mono text-[10px] text-on-surface-variant">{c.codigo || '—'}</p>
+              </div>
+              <div className="space-y-1">
+                {[
+                  { clave: 'citas', valor: c.citas, color: 'var(--color-secondary)' },
+                  { clave: 'consultas', valor: c.consultas, color: 'var(--color-health)' },
+                ].map((serie) => (
+                  <div key={serie.clave} className="flex items-center gap-2">
+                    <span className="h-2 min-w-0 flex-1 overflow-hidden rounded-full bg-surface-container">
+                      <span
+                        className="block h-full rounded-full"
+                        style={{
+                          width: `${maximo > 0 ? (serie.valor / maximo) * 100 : 0}%`,
+                          background: serie.color,
+                        }}
+                      />
+                    </span>
+                    <span className="w-10 text-right font-mono text-[11px] font-semibold text-on-surface">
+                      {numero(serie.valor)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="py-8 text-center text-xs text-on-surface-variant">
+          Todavía no hay centros registrados.
+        </p>
       )}
     </section>
   );
@@ -178,14 +457,14 @@ function SidebarDirector({ seccionActiva, setSeccionActiva, sidebarAbierta, setS
         className={`fixed inset-y-0 left-0 z-50 bg-white border-r border-outline-variant flex flex-col w-64 shadow-xl transition-transform duration-300 ${
           sidebarAbierta ? 'translate-x-0' : '-translate-x-full pointer-events-none'
         } lg:pointer-events-auto lg:translate-x-0 lg:static lg:z-auto lg:h-auto lg:self-start lg:shadow-none lg:border lg:border-outline-variant/60 lg:rounded-2xl lg:w-60 lg:shrink-0`}
-        aria-label="Navegación del panel del director"
+        aria-label="Navegación del panel ejecutivo"
       >
         <div className="flex items-center justify-between px-5 py-4 border-b border-outline-variant bg-surface-container-low shrink-0 lg:rounded-t-2xl">
           <div className="flex items-center gap-2">
             <span className="w-8 h-8 rounded-xl bg-secondary flex items-center justify-center text-white shrink-0">
               <Icon name="dashboard" className="text-sm" />
             </span>
-            <span className="font-display text-sm font-semibold text-primary leading-tight">Panel Director</span>
+            <span className="font-display text-sm font-semibold text-primary leading-tight">Panel Ejecutivo</span>
           </div>
           <button
             type="button"
@@ -250,38 +529,58 @@ function SidebarDirector({ seccionActiva, setSeccionActiva, sidebarAbierta, setS
 }
 
 /* ════════════════════════════════════════════════════════════════
-   Pills de filtro por centro
+   Selector de sede: tabs con wrap, nunca se cortan
    ═══════════════════════════════════════════════════════════════ */
 
-function PillsFiltroCentro({ centros, centroId, setCentroId }) {
+function TabCentro({ activo, onClick, citas, children }) {
   return (
-    <nav aria-label="Filtrar por centro de salud" className="mb-5 flex gap-2 overflow-x-auto pb-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-      <button
-        type="button"
-        onClick={() => setCentroId('general')}
-        aria-pressed={centroId === 'general'}
-        className={`shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-semibold transition tab-interactive ${
-          centroId === 'general'
-            ? 'border-secondary bg-secondary text-white'
-            : 'border-outline-variant/70 bg-white text-on-surface-variant hover:border-secondary/50 hover:text-secondary'
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={activo}
+      className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition tab-interactive ${
+        activo
+          ? 'border-secondary bg-secondary text-white'
+          : 'border-outline-variant/70 bg-white text-on-surface-variant hover:border-secondary/50 hover:text-secondary'
+      }`}
+    >
+      {children}
+      <span
+        className={`rounded-full px-1.5 font-mono text-[10px] font-semibold ${
+          activo ? 'bg-white/20 text-white' : 'bg-surface-container text-on-surface-variant'
         }`}
       >
+        {numero(citas)}
+      </span>
+    </button>
+  );
+}
+
+function PillsFiltroCentro({ centros, centroId, setCentroId }) {
+  const totalRed = centros.reduce((suma, c) => suma + (Number(c.citas) || 0), 0);
+
+  return (
+    <nav aria-label="Filtrar por centro de salud" className="mb-5 flex flex-wrap items-center gap-2">
+      <span className="mr-0.5 inline-flex items-center gap-1.5 text-[11px] font-semibold text-on-surface-variant">
+        <Icon name="local_hospital" className="text-base text-secondary" />
+        Vista
+      </span>
+      <TabCentro
+        activo={centroId === 'general'}
+        onClick={() => setCentroId('general')}
+        citas={totalRed}
+      >
         Datos generales
-      </button>
+      </TabCentro>
       {centros.map((c) => (
-        <button
+        <TabCentro
           key={c.id}
-          type="button"
+          activo={String(c.id) === centroId}
           onClick={() => setCentroId(String(c.id))}
-          aria-pressed={String(c.id) === centroId}
-          className={`shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-semibold transition tab-interactive ${
-            String(c.id) === centroId
-              ? 'border-secondary bg-secondary text-white'
-              : 'border-outline-variant/70 bg-white text-on-surface-variant hover:border-secondary/50 hover:text-secondary'
-          }`}
+          citas={c.citas}
         >
           {c.nombre}
-        </button>
+        </TabCentro>
       ))}
     </nav>
   );
@@ -291,71 +590,78 @@ function PillsFiltroCentro({ centros, centroId, setCentroId }) {
    Panel: Alcance y atención (KPIs + gráficas)
    ═══════════════════════════════════════════════════════════════ */
 
-function PanelAlcanceAtencion({ actual, citasPorEstado, especialidades, cargos }) {
+function PanelAlcanceAtencion({
+  actual,
+  alcance,
+  citasPorEstado,
+  especialidades,
+  cargos,
+  centros,
+  medicos,
+  medicosRed,
+  mostrarComparativa,
+}) {
   const kpis = [
     {
       icono: 'event_available',
       etiqueta: 'Citas',
       valor: numero(actual.citas),
-      detalle: `${numero(actual.citas_hoy)} para hoy · ${numero(actual.citas_pendientes)} pendientes`,
-      acento: 'text-secondary',
+      detalle: `${numero(actual.citas_hoy)} hoy · ${numero(actual.citas_pendientes)} pendientes`,
     },
     {
       icono: 'clinical_notes',
       etiqueta: 'Consultas',
       valor: numero(actual.consultas),
-      detalle: 'Consultas registradas en el período',
-      acento: 'text-health-dark',
+      detalle: 'Registradas en el período',
     },
     {
       icono: 'groups',
       etiqueta: 'Pacientes',
       valor: numero(actual.pacientes),
-      detalle: 'Pacientes atendidos o citados',
-      acento: 'text-secondary',
+      detalle: 'Atendidos o citados',
     },
     {
       icono: 'badge',
       etiqueta: 'Personal',
       valor: numero(actual.personal || actual.personal_activos),
-      detalle: `${numero(actual.personal_activos)} activos · ${numero(actual.medicos)} médicos`,
-      acento: 'text-health-dark',
+      detalle: `${numero(actual.personal_activos)} activos · ${numero(medicos)} médicos`,
     },
   ];
 
   return (
     <div className="space-y-5">
       <section aria-label="Indicadores principales">
-        <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
           {kpis.map((kpi) => (
             <TarjetaKpi key={kpi.etiqueta} {...kpi} />
           ))}
         </div>
       </section>
 
-      <div className="grid gap-4 lg:grid-cols-3">
-        <PanelBarras
-          titulo="Citas por estado"
-          subtitulo="Toda la red"
-          datos={citasPorEstado}
-          color="bg-secondary"
-          vacio="Todavía no hay citas registradas."
-        />
-        <PanelBarras
-          titulo="Especialidades con más citas"
-          subtitulo="Acumulado de la red"
-          datos={especialidades}
-          color="bg-health"
-          vacio="Todavía no hay especialidades con citas."
-        />
-        <PanelBarras
-          titulo="Personal por cargo"
-          subtitulo="Nómina registrada en la red"
-          datos={cargos}
-          color="bg-secondary-light"
-          vacio="Todavía no hay personal registrado."
-        />
+      <div className="grid gap-4 lg:grid-cols-5">
+        <div className="lg:col-span-2">
+          <DonaEstados
+            datos={citasPorEstado}
+            alcance={alcance}
+            vacio="Todavía no hay citas registradas."
+          />
+        </div>
+        <div className="lg:col-span-3">
+          <BarrasEspecialidades
+            datos={especialidades}
+            vacio="Todavía no hay especialidades con citas."
+          />
+        </div>
       </div>
+
+      <DesglosePersonal
+        datos={cargos}
+        registrados={cargos.reduce((suma, c) => suma + c.total, 0)}
+        medicos={medicosRed}
+        vacio="Todavía no hay personal registrado."
+      />
+
+      {mostrarComparativa && <ComparativaCentros centros={centros} />}
     </div>
   );
 }
@@ -370,6 +676,158 @@ function PanelStockInventario({ centros, centroId, totales }) {
   const actual = centro || totales;
   const nombreVista = centroId === 'general' ? 'Toda la red' : (centro?.nombre || '');
 
+  const [stock, setStock] = useState([]);
+  const [ordenes, setOrdenes] = useState([]);
+  const [cargando, setCargando] = useState(true);
+  const [error, setError] = useState('');
+  const [aviso, setAviso] = useState('');
+  const [modal, setModal] = useState(null);
+  const [centroModal, setCentroModal] = useState('');
+  const [guardando, setGuardando] = useState(false);
+  const [busqueda, setBusqueda] = useState('');
+  const [resultados, setResultados] = useState([]);
+  const [buscando, setBuscando] = useState(false);
+  const [nuevo, setNuevo] = useState(null);
+  const [guardandoItem, setGuardandoItem] = useState(false);
+  const modalAbierto = Boolean(modal);
+
+  const cargar = useCallback(async () => {
+    try {
+      const [s, o] = await Promise.all([
+        API.almacenStock(centro?.id),
+        API.almacenOrdenes(centro?.id),
+      ]);
+      setStock(s.items || []);
+      setOrdenes(o.items || []);
+      setError('');
+    } catch (e) {
+      setError(e.message || 'No se pudo cargar el inventario.');
+    } finally {
+      setCargando(false);
+    }
+  }, [centro?.id]);
+
+  // Refresco automático: el sistema interno empuja cada recepción o consumo.
+  useEffect(() => {
+    cargar();
+    const id = setInterval(cargar, 20000);
+    return () => clearInterval(id);
+  }, [cargar]);
+
+  // Autocompletado del catálogo: 300 ms de espera para no golpear la API.
+  useEffect(() => {
+    const texto = busqueda.trim();
+    if (!modalAbierto || texto.length < 2) {
+      setResultados([]);
+      return undefined;
+    }
+    let vigente = true;
+    const id = setTimeout(async () => {
+      setBuscando(true);
+      try {
+        const data = await API.catalogoInsumos({ q: texto });
+        if (vigente) setResultados(data.items || []);
+      } catch {
+        if (vigente) setResultados([]);
+      } finally {
+        if (vigente) setBuscando(false);
+      }
+    }, 300);
+    return () => {
+      vigente = false;
+      clearTimeout(id);
+    };
+  }, [busqueda, modalAbierto]);
+
+  const abrirOrden = () => {
+    setCentroModal(centro ? String(centro.id) : String(centros[0]?.id || ''));
+    setModal({ observacion: '', items: [] });
+    setBusqueda('');
+    setResultados([]);
+    setNuevo(null);
+    setAviso('');
+  };
+
+  const cambiarItem = (indice, cambios) => {
+    setModal((prev) => ({
+      ...prev,
+      items: prev.items.map((linea, i) => (i === indice ? { ...linea, ...cambios } : linea)),
+    }));
+  };
+
+  const agregarAlCarrito = (producto) => {
+    setModal((prev) => {
+      if (!prev || prev.items.some((l) => l.insumo.id === producto.id)) return prev;
+      return {
+        ...prev,
+        items: [
+          ...prev.items,
+          { insumo: producto, cantidad: 1, lote: '', fecha_vencimiento: '' },
+        ],
+      };
+    });
+    setBusqueda('');
+    setResultados([]);
+  };
+
+  const guardarNuevo = async (evento) => {
+    evento.preventDefault();
+    if (!nuevo?.nombre.trim()) {
+      setError('Escriba el nombre del nuevo ítem.');
+      return;
+    }
+    setGuardandoItem(true);
+    setError('');
+    try {
+      const data = await API.crearInsumoCatalogo({
+        codigo: nuevo.codigo.trim() || null,
+        nombre: nuevo.nombre.trim(),
+        categoria: nuevo.categoria,
+        presentacion: nuevo.presentacion.trim() || null,
+        unidad_medida: nuevo.unidad_medida.trim() || null,
+      });
+      agregarAlCarrito(data.item);
+      setNuevo(null);
+      setAviso(`«${data.item.nombre}» agregado al catálogo y al carrito.`);
+    } catch (e) {
+      setError(e.message || 'No se pudo agregar el ítem al catálogo.');
+    } finally {
+      setGuardandoItem(false);
+    }
+  };
+
+  const enviarOrden = async (evento) => {
+    evento.preventDefault();
+    const items = (modal?.items || []).filter((l) => Number(l.cantidad) > 0);
+    if (!centroModal || items.length === 0) {
+      setError('Seleccione el centro de salud y al menos un producto con cantidad.');
+      return;
+    }
+    setGuardando(true);
+    setError('');
+    try {
+      await API.crearOrdenEntrega({
+        centro_id: Number(centroModal),
+        observacion: modal.observacion.trim() || null,
+        items: items.map((linea) => ({
+          insumo_id: linea.insumo.id,
+          cantidad: Number(linea.cantidad),
+          lote: linea.lote.trim() || null,
+          fecha_vencimiento: linea.fecha_vencimiento || null,
+        })),
+      });
+      setAviso('Orden de entrega creada. El Jefe de Almacén puede verla en el sistema interno.');
+      setModal(null);
+      await cargar();
+    } catch (e) {
+      setError(e.message || 'No se pudo crear la orden de entrega.');
+    } finally {
+      setGuardando(false);
+    }
+  };
+
+  const pendientes = ordenes.filter((o) => o.estado === 'pendiente_recepcion');
+
   return (
     <div className="space-y-5">
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
@@ -378,24 +836,142 @@ function PanelStockInventario({ centros, centroId, totales }) {
             {nombreVista}
           </h2>
           <p className="text-xs text-on-surface-variant">
-            {centro ? `Detalle del centro · ${centro.codigo || 'sin código'}` : 'Inventario consolidado de todos los centros'}
+            {centro
+              ? `Detalle del centro · ${centro.codigo || 'sin código'}`
+              : 'Inventario consolidado de todos los centros'}
           </p>
         </div>
-        <span
-          className={`rounded-full px-2.5 py-1 text-[10px] font-semibold ${
-            actual.stock_agotados > 0 ? 'bg-blood-soft text-blood' : 'bg-mint-soft text-mint'
-          }`}
-        >
-          {actual.stock_agotados > 0 ? 'Requiere reposición' : 'Sin agotados'}
-        </span>
+        <div className="flex items-center gap-2">
+          <span
+            className={`rounded-full px-2.5 py-1 text-[10px] font-semibold ${
+              actual.stock_agotados > 0 ? 'bg-blood-soft text-blood' : 'bg-mint-soft text-mint'
+            }`}
+          >
+            {actual.stock_agotados > 0 ? 'Requiere reposición' : 'Sin agotados'}
+          </span>
+          <button
+            type="button"
+            onClick={abrirOrden}
+            disabled={centros.length === 0}
+            className="inline-flex items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-[11px] font-semibold text-white disabled:opacity-40"
+          >
+            <Icon name="local_shipping" className="text-sm" />
+            Nueva orden de entrega
+          </button>
+        </div>
       </div>
 
-      <TablaCentros
-        centros={centros}
-        seleccionado={centroId}
-        onSeleccionar={() => {}}
-        totales={totales}
-      />
+      {aviso && (
+        <div className="rounded-xl border border-mint/30 bg-mint-soft px-3 py-2 text-[11px] text-mint">
+          {aviso}
+        </div>
+      )}
+      {error && (
+        <div className="rounded-xl border border-blood/30 bg-blood-soft px-3 py-2 text-[11px] text-blood">
+          {error}
+        </div>
+      )}
+
+      <section className="rounded-2xl border border-outline-variant/60 bg-white p-4 shadow-sm">
+        <header className="mb-3 flex items-center justify-between gap-2">
+          <div>
+            <h3 className="font-display text-base font-semibold text-primary">Existencias por centro</h3>
+            <p className="text-[11px] text-on-surface-variant">
+              {nombreVista} · se actualiza con cada recepción o consumo del Jefe de Almacén
+            </p>
+          </div>
+          <span className="rounded-full bg-surface-container-low px-2.5 py-1 text-[10px] font-semibold text-on-surface-variant">
+            {stock.length} producto(s)
+          </span>
+        </header>
+
+        {cargando ? (
+          <p className="py-6 text-center text-xs text-on-surface-variant">Cargando inventario…</p>
+        ) : stock.length === 0 ? (
+          <p className="py-6 text-center text-xs text-on-surface-variant">
+            Todavía no hay existencias registradas. Se llenan cuando el centro recibe una orden de entrega.
+          </p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead className="text-[10px] uppercase tracking-wide text-on-surface-variant">
+                <tr>
+                  <th className="py-1.5">Producto</th>
+                  <th className="py-1.5">Tipo</th>
+                  {centroId === 'general' && <th className="py-1.5">Centro</th>}
+                  <th className="py-1.5 text-right">Cantidad</th>
+                  <th className="py-1.5 text-center">Estado</th>
+                </tr>
+              </thead>
+              <tbody>
+                {stock.map((item) => {
+                  const nombreCentro =
+                    centros.find((c) => String(c.id) === String(item.clinica_id))?.nombre || '—';
+                  return (
+                    <tr key={`${item.clinica_id}-${item.item_key}`} className="border-t border-outline-variant/40">
+                      <td className="py-1.5 font-medium text-primary">{item.nombre}</td>
+                      <td className="py-1.5 capitalize text-on-surface-variant">{item.tipo}</td>
+                      {centroId === 'general' && (
+                        <td className="py-1.5 text-on-surface-variant">{nombreCentro}</td>
+                      )}
+                      <td className="py-1.5 text-right font-semibold text-primary">{numero(item.cantidad)}</td>
+                      <td className="py-1.5 text-center">
+                        <span
+                          className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                            item.bajo_minimo ? 'bg-blood-soft text-blood' : 'bg-mint-soft text-mint'
+                          }`}
+                        >
+                          {item.bajo_minimo ? 'Stock bajo' : 'Disponible'}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+
+      <section className="rounded-2xl border border-outline-variant/60 bg-white p-4 shadow-sm">
+        <header className="mb-3 flex items-center justify-between gap-2">
+          <div>
+            <h3 className="font-display text-base font-semibold text-primary">Órdenes de entrega</h3>
+            <p className="text-[11px] text-on-surface-variant">
+              Pendientes de recepción: {pendientes.length}
+            </p>
+          </div>
+        </header>
+        {ordenes.length === 0 ? (
+          <p className="py-4 text-center text-xs text-on-surface-variant">No hay órdenes de entrega.</p>
+        ) : (
+          <ul className="divide-y divide-outline-variant/40">
+            {ordenes.slice(0, 12).map((orden) => (
+              <li key={orden.id} className="flex flex-wrap items-center justify-between gap-2 py-2">
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold text-primary">
+                    {orden.numero || String(orden.id).slice(0, 8)} ·{' '}
+                    {centros.find((c) => String(c.id) === String(orden.centro_id))?.nombre || 'Centro'}
+                  </p>
+                  <p className="text-[10px] text-on-surface-variant">
+                    {fechaHora(orden.creada_en)} · {(orden.items || []).length} producto(s)
+                    {orden.recibida_por ? ` · recibida por ${orden.recibida_por}` : ''}
+                  </p>
+                </div>
+                <span
+                  className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                    orden.estado === 'recibida'
+                      ? 'bg-mint-soft text-mint'
+                      : 'bg-amber/15 text-amber'
+                  }`}
+                >
+                  {orden.estado === 'recibida' ? 'Recibida' : 'Pendiente de recepción'}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
 
       <section className="rounded-2xl border border-outline-variant/60 bg-white p-4 shadow-sm">
         <header className="mb-3 flex items-center justify-between gap-2">
@@ -426,16 +1002,277 @@ function PanelStockInventario({ centros, centroId, totales }) {
           </div>
         </dl>
         <p className="mt-3 text-[11px] leading-relaxed text-on-surface-variant">
-          Se considera stock bajo cuando un medicamento tiene 10 unidades o menos. Los datos provienen del inventario por clínica.
+          Las existencias provienen de las órdenes de entrega recibidas por el Jefe de Almacén de cada centro.
         </p>
       </section>
+
+      {modal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <form
+            onSubmit={enviarOrden}
+            className="max-h-[85vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white p-5 shadow-xl"
+          >
+            <div className="mb-3 flex items-center justify-between">
+              <h3 className="font-display text-base font-semibold text-primary">Nueva orden de entrega</h3>
+              <button type="button" onClick={() => setModal(null)} aria-label="Cerrar">
+                <Icon name="close" className="text-base text-on-surface-variant" />
+              </button>
+            </div>
+
+            <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-on-surface-variant">
+              Centro de salud destino
+            </label>
+            <select
+              value={centroModal}
+              onChange={(e) => setCentroModal(e.target.value)}
+              className="mb-3 w-full rounded-lg border border-outline-variant px-3 py-2 text-xs"
+            >
+              <option value="">Seleccione un centro…</option>
+              {centros.map((c) => (
+                <option key={c.id} value={c.id}>{c.nombre}</option>
+              ))}
+            </select>
+
+            <div className="mb-1 flex items-center justify-between gap-2">
+              <label className="block text-[10px] font-semibold uppercase tracking-wide text-on-surface-variant">
+                Buscar en el catálogo
+              </label>
+              <button
+                type="button"
+                onClick={() =>
+                  setNuevo(
+                    nuevo
+                      ? null
+                      : {
+                          nombre: '',
+                          codigo: '',
+                          categoria: 'Medicamento',
+                          presentacion: '',
+                          unidad_medida: '',
+                        },
+                  )
+                }
+                className="inline-flex items-center gap-1 text-[11px] font-semibold text-secondary"
+              >
+                <Icon name="add" className="text-sm" /> Nuevo ítem al catálogo
+              </button>
+            </div>
+
+            <div className="relative mb-3">
+              <input
+                type="text"
+                value={busqueda}
+                onChange={(e) => setBusqueda(e.target.value)}
+                placeholder="Nombre o código (ej. paracetamol, MED-001)"
+                autoComplete="off"
+                className="w-full rounded-lg border border-outline-variant px-3 py-2 text-xs"
+              />
+              {busqueda.trim().length >= 2 && (
+                <div className="absolute z-20 mt-1 max-h-52 w-full overflow-y-auto rounded-lg border border-outline-variant bg-white shadow-lg">
+                  {buscando ? (
+                    <p className="px-3 py-2 text-[11px] text-on-surface-variant">Buscando…</p>
+                  ) : resultados.length === 0 ? (
+                    <p className="px-3 py-2 text-[11px] text-on-surface-variant">
+                      Sin coincidencias. Use «Nuevo ítem al catálogo».
+                    </p>
+                  ) : (
+                    resultados.map((p) => (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() => agregarAlCarrito(p)}
+                        className="block w-full px-3 py-2 text-left hover:bg-surface-container-low"
+                      >
+                        <span className="block text-xs font-semibold text-primary">{p.nombre}</span>
+                        <span className="block text-[10px] text-on-surface-variant">
+                          {[p.codigo, p.categoria, p.presentacion].filter(Boolean).join(' · ')}
+                        </span>
+                      </button>
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
+
+            {nuevo && (
+              <div className="mb-3 rounded-xl border border-outline-variant/60 bg-surface-container-low p-3">
+                <p className="mb-2 text-[11px] font-semibold text-primary">Nuevo ítem del catálogo</p>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <input
+                    type="text"
+                    value={nuevo.nombre}
+                    onChange={(e) => setNuevo({ ...nuevo, nombre: e.target.value })}
+                    placeholder="Nombre * (ej. Paracetamol 500mg)"
+                    className="rounded-lg border border-outline-variant px-2 py-1.5 text-xs"
+                    aria-label="Nombre del ítem"
+                  />
+                  <input
+                    type="text"
+                    value={nuevo.codigo}
+                    onChange={(e) => setNuevo({ ...nuevo, codigo: e.target.value })}
+                    placeholder="Código (ej. MED-001)"
+                    className="rounded-lg border border-outline-variant px-2 py-1.5 text-xs"
+                    aria-label="Código del ítem"
+                  />
+                  <select
+                    value={nuevo.categoria}
+                    onChange={(e) => setNuevo({ ...nuevo, categoria: e.target.value })}
+                    className="rounded-lg border border-outline-variant px-2 py-1.5 text-xs"
+                    aria-label="Categoría del ítem"
+                  >
+                    {['Medicamento', 'Insumo Médico', 'Material Quirúrgico', 'Otro'].map((c) => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                  </select>
+                  <input
+                    type="text"
+                    value={nuevo.presentacion}
+                    onChange={(e) => setNuevo({ ...nuevo, presentacion: e.target.value })}
+                    placeholder="Presentación (ej. Caja x 20 tabletas)"
+                    className="rounded-lg border border-outline-variant px-2 py-1.5 text-xs"
+                    aria-label="Presentación del ítem"
+                  />
+                  <input
+                    type="text"
+                    value={nuevo.unidad_medida}
+                    onChange={(e) => setNuevo({ ...nuevo, unidad_medida: e.target.value })}
+                    placeholder="Unidad de medida (ej. tabletas)"
+                    className="rounded-lg border border-outline-variant px-2 py-1.5 text-xs"
+                    aria-label="Unidad de medida del ítem"
+                  />
+                </div>
+                <div className="mt-2 flex justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setNuevo(null)}
+                    className="rounded-lg border border-outline-variant px-3 py-1.5 text-[11px] font-semibold text-on-surface-variant"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={guardarNuevo}
+                    disabled={guardandoItem}
+                    className="rounded-lg bg-primary px-3 py-1.5 text-[11px] font-semibold text-white disabled:opacity-50"
+                  >
+                    {guardandoItem ? 'Guardando…' : 'Guardar y agregar'}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-on-surface-variant">
+              Carrito de despacho
+            </label>
+            {modal.items.length === 0 ? (
+              <p className="mb-3 rounded-lg border border-dashed border-outline-variant px-3 py-4 text-center text-[11px] text-on-surface-variant">
+                Busque un producto arriba y agréguelo al carrito.
+              </p>
+            ) : (
+              <div className="mb-3 overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead className="text-[10px] uppercase tracking-wide text-on-surface-variant">
+                    <tr>
+                      <th className="py-1.5 pr-2">Producto</th>
+                      <th className="w-16 py-1.5 pr-2">Cant.</th>
+                      <th className="w-28 py-1.5 pr-2">Lote</th>
+                      <th className="w-36 py-1.5 pr-2">Vence</th>
+                      <th className="py-1.5" />
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {modal.items.map((linea, indice) => (
+                      <tr key={linea.insumo.id} className="border-t border-outline-variant/40">
+                        <td className="py-1.5 pr-2">
+                          <span className="block font-medium text-primary">{linea.insumo.nombre}</span>
+                          <span className="block text-[10px] text-on-surface-variant">
+                            {[linea.insumo.codigo, linea.insumo.presentacion].filter(Boolean).join(' · ') || '—'}
+                          </span>
+                        </td>
+                        <td className="py-1.5 pr-2">
+                          <input
+                            type="number"
+                            min="1"
+                            value={linea.cantidad}
+                            onChange={(e) => cambiarItem(indice, { cantidad: e.target.value })}
+                            className="w-full rounded-lg border border-outline-variant px-2 py-1.5 text-xs"
+                            aria-label={`Cantidad de ${linea.insumo.nombre}`}
+                          />
+                        </td>
+                        <td className="py-1.5 pr-2">
+                          <input
+                            type="text"
+                            value={linea.lote}
+                            onChange={(e) => cambiarItem(indice, { lote: e.target.value })}
+                            placeholder="Opcional"
+                            className="w-full rounded-lg border border-outline-variant px-2 py-1.5 text-xs"
+                            aria-label={`Lote de ${linea.insumo.nombre}`}
+                          />
+                        </td>
+                        <td className="py-1.5 pr-2">
+                          <input
+                            type="date"
+                            value={linea.fecha_vencimiento}
+                            onChange={(e) => cambiarItem(indice, { fecha_vencimiento: e.target.value })}
+                            className="w-full rounded-lg border border-outline-variant px-2 py-1.5 text-xs"
+                            aria-label={`Vencimiento de ${linea.insumo.nombre}`}
+                          />
+                        </td>
+                        <td className="py-1.5">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setModal((prev) => ({
+                                ...prev,
+                                items: prev.items.filter((_, i) => i !== indice),
+                              }))
+                            }
+                            className="rounded-lg p-1.5 text-on-surface-variant hover:bg-surface-container-low"
+                            aria-label={`Quitar ${linea.insumo.nombre}`}
+                          >
+                            <Icon name="delete" className="text-sm" />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-on-surface-variant">
+              Observación (opcional)
+            </label>
+            <input
+              type="text"
+              value={modal.observacion}
+              onChange={(e) => setModal((prev) => ({ ...prev, observacion: e.target.value }))}
+              placeholder="Ej: reposición mensual"
+              className="mb-4 w-full rounded-lg border border-outline-variant px-3 py-2 text-xs"
+            />
+
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setModal(null)}
+                className="rounded-lg border border-outline-variant px-3 py-2 text-[11px] font-semibold text-on-surface-variant"
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                disabled={guardando}
+                className="rounded-lg bg-primary px-3.5 py-2 text-[11px] font-semibold text-white disabled:opacity-50"
+              >
+                {guardando ? 'Generando…' : 'Generar orden'}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
     </div>
   );
 }
-
-/* ════════════════════════════════════════════════════════════════
-   Panel: Datos laborales (en construcción)
-   ═══════════════════════════════════════════════════════════════ */
 
 function PanelLaboralEnConstruccion() {
   return (
@@ -816,8 +1653,11 @@ function Panel({ sesion, onSalir }) {
   const actual = centro || t;
 
   const citasPorEstado = (actual.citas_por_estado || datos?.citas_por_estado || []).map((e) => ({
-    etiqueta: e.estado.charAt(0).toUpperCase() + e.estado.slice(1),
+    etiqueta:
+      ETIQUETA_ESTADO[sinTildes(e.estado)] ||
+      e.estado.charAt(0).toUpperCase() + e.estado.slice(1).replace(/_/g, ' '),
     total: e.total,
+    color: COLOR_ESTADO[sinTildes(e.estado)] || 'var(--color-outline)',
   }));
 
   const especialidades = (datos?.especialidades || []).map((e) => ({
@@ -825,10 +1665,10 @@ function Panel({ sesion, onSalir }) {
     total: e.total,
   }));
 
-  const cargos = (datos?.personal_por_cargo || []).map((c) => ({
-    etiqueta: c.nombre,
-    total: c.total,
-  }));
+  const cargos = agruparCargos(datos?.personal_por_cargo || []);
+  const medicosRed = cargos.find((c) => c.esMedico)?.total ?? (t.medicos || 0);
+  const medicosKpi = centroId === 'general' ? medicosRed : (actual.medicos || 0);
+  const alcance = centro?.nombre || 'Toda la red';
 
   return (
     <div className="min-h-screen bg-surface">
@@ -856,7 +1696,7 @@ function Panel({ sesion, onSalir }) {
             <span className="hidden h-8 w-px bg-white/15 sm:block" aria-hidden="true" />
             <span className="hidden items-center gap-1.5 rounded-full border border-health-light/30 bg-health/15 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-health-light sm:inline-flex">
               <Icon name={rol.icono} className="text-sm" />
-              {rol.etiqueta}
+              {rol.insignia || rol.etiqueta}
             </span>
           </div>
 
@@ -928,25 +1768,25 @@ function Panel({ sesion, onSalir }) {
         {cargando && !datos ? (
           <div className="space-y-5">
             <section aria-label="Indicadores principales">
-              <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 xl:grid-cols-6">
-                {[1, 2, 3, 4, 5, 6].map((i) => (
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
+                {[1, 2, 3, 4].map((i) => (
                   <EsqueletoKpi key={i} />
                 ))}
               </div>
             </section>
 
-            <div className="grid gap-4 lg:grid-cols-3">
-              <EsqueletoPanelBarras />
-              <EsqueletoPanelBarras />
-              <EsqueletoPanelBarras />
+            <div className="grid gap-4 lg:grid-cols-5">
+              <div className="lg:col-span-2">
+                <EsqueletoPanelBarras />
+              </div>
+              <div className="lg:col-span-3">
+                <EsqueletoPanelBarras />
+              </div>
             </div>
+
+            <EsqueletoPanelBarras />
 
             <EsqueletoTablaCentros />
-
-            <div className="grid gap-4 lg:grid-cols-2">
-              <EsqueletoPanelBarras />
-              <EsqueletoPanelBarras />
-            </div>
           </div>
         ) : datos ? (
           <div className="flex flex-col lg:flex-row gap-6 items-start">
@@ -968,9 +1808,14 @@ function Panel({ sesion, onSalir }) {
                 ) : (
                   <PanelAlcanceAtencion
                     actual={actual}
+                    alcance={alcance}
                     citasPorEstado={citasPorEstado}
                     especialidades={especialidades}
                     cargos={cargos}
+                    centros={centros}
+                    medicos={medicosKpi}
+                    medicosRed={medicosRed}
+                    mostrarComparativa={centroId === 'general'}
                   />
                 )}
               </div>

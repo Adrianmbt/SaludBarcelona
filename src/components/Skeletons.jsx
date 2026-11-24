@@ -34,14 +34,14 @@ export function EsqueletoCircular({ size = '40px' }) {
 // Esqueleto para tarjetas de KPI (usado en panel institucional)
 export function EsqueletoKpi() {
   return (
-    <div className="rounded-2xl border border-outline-variant/40 bg-white p-4 shadow-sm">
-      <div className="flex items-start justify-between gap-2">
-        <div className="flex flex-col gap-2">
-          <EsqueletoCajita width="80px" height="12px" />
-          <EsqueletoCajita width="50px" height="36px" />
-          <EsqueletoCajita width="100px" height="14px" />
+    <div className="flex items-center gap-3 rounded-2xl border border-outline-variant/40 bg-white px-3 py-2.5 shadow-sm">
+      <div className="skeleton h-10 w-10 shrink-0 rounded-xl" aria-hidden="true" />
+      <div className="min-w-0 flex-1 space-y-2">
+        <div className="flex items-center justify-between gap-2">
+          <div className="skeleton h-5 w-12" aria-hidden="true" />
+          <div className="skeleton h-3 w-16" aria-hidden="true" />
         </div>
-        <EsqueletoCircular size="32px" />
+        <div className="skeleton h-2.5 w-4/5" aria-hidden="true" />
       </div>
     </div>
   );
